@@ -1,18 +1,63 @@
 <script setup lang="ts">
 import dom2Image from 'dom-to-image';
 import dayjs from 'dayjs';
-import {onMounted, ref} from 'vue';
-import type {Goods, TableValue} from '@/typings.ts';
+import {computed, onMounted, ref} from 'vue';
+import type {Goods} from '@/typings.ts';
+import {TableValue} from '@/typings.ts';
 import Decimal from 'decimal.js';
+import EditIcon from "@/edit-icon.vue";
+import DeleteIcon from "@/delete-icon.vue";
 
 const imgScale = 5;
 const showPreview = ref(false);
 const showImportModal = ref(false);
 const textarea = ref<HTMLTextAreaElement | null>(null);
+const showGoodsEdit = ref(false);
+const showCnEdit = ref(false);
+const showTitleEdit = ref(false);
+const showDDLEdit = ref(false);
+const showAdd = ref(false);
+const isAddGoods = ref(false);
+
+const title = ref('标题');
+const ddl = ref('ddl');
 
 const importType = ref('order');
+const importPrefix = ref('');
+const importSuffix = ref('');
 const importValue = ref('');
 const tableValue = ref<TableValue[]>([]);
+const editingGoods = ref<Goods & {
+    originList?: Goods[];
+    originIndex?: number;
+} | null>(null);
+const editingTableValue = ref<TableValue | null>(null);
+const editingAdd = ref<TableValue | null>(null);
+
+const allTotalPrice = computed(() => {
+   return tableValue.value.reduce((previousValue, currentValue) => {
+       return Decimal.add(previousValue, currentValue.totalPrice);
+   }, new Decimal(0));
+});
+
+const displayTableValue = computed(() => {
+    if (tableValue.value.length >= 20) {
+        return tableValue.value;
+    } else {
+        const data = [...tableValue.value];
+        const offset = 20 - tableValue.value.length;
+        for (let i = 0;i < offset;i ++) {
+            data.push({
+                cn: '',
+                goodsList: [],
+                totalPrice: ''
+            });
+        }
+        console.log(offset, data);
+
+        return data;
+    }
+});
 
 function preview() {
     showPreview.value = !showPreview.value;
@@ -51,17 +96,12 @@ async function exportImage() {
     img.src = svgUrl;
 }
 
-function addNewGoods(cn: string, goods: Goods[], totalPrice: Decimal) {
+function addNewGoods(cn: string, goods: Goods[]) {
     const index = tableValue.value.findIndex((item) => item.cn === cn);
     if (index === -1) {
-        tableValue.value.push({
-            cn,
-            goodsList: goods,
-            totalPrice,
-        });
+        tableValue.value.push(new TableValue(cn, goods));
     } else {
-        tableValue.value[index].goodsList = tableValue.value[index].goodsList.concat(goods);
-        tableValue.value[index].totalPrice = tableValue.value[index].totalPrice.plus(totalPrice);
+        tableValue.value[index].addGoodsList(goods);
     }
 }
 
@@ -69,7 +109,6 @@ function importTable() {
     try {
         console.log(importValue.value);
         const rows = importValue.value.split('\n');
-        console.log(rows);
         const types = rows[1].split('\t');
         const prices = rows[2].split('\t');
 
@@ -77,19 +116,23 @@ function importTable() {
         if (importType.value === 'summary') {
             for (let index = 4; index < rows.length; index++) {
                 const data = rows[index].split('\t');
-                const totalPrice = new Decimal(data[0]);
                 const cn = data[1];
                 const goods: Goods[] = [];
+
+                if (data.length <= 1) {
+                    console.log(data);
+                    throw new Error();
+                }
                 for (let i = 2; i < data.length; i++) {
                     if (data[i]) {
                         goods.push({
-                            name: types[i],
+                            name: importPrefix.value + types[i] + importSuffix.value,
                             quantity: new Decimal(data[i]),
                             price: new Decimal(prices[i]),
                         });
                     }
                 }
-                addNewGoods(cn, goods, totalPrice);
+                addNewGoods(cn, goods);
             }
         } else if (importType.value === 'order') {
             const valueList: {
@@ -100,11 +143,16 @@ function importTable() {
             for (let index = 3; index < rows.length; index++) {
                 const data = rows[index].split('\t');
 
+                if (data.length <= 1) {
+                    console.log(data);
+                    throw new Error();
+                }
+
                 for (let i = 1; i < data.length; i++) {
                     if (data[i]) {
                         const cn = data[i];
                         const price = new Decimal(prices[i]);
-                        const type = types[i];
+                        const type = importPrefix.value + types[i] + importSuffix.value;
 
                         if (valueList[cn]) {
                             const goods = valueList[cn];
@@ -130,11 +178,7 @@ function importTable() {
             }
 
             for (const cn of Object.keys(valueList)) {
-                const goods = valueList[cn];
-                const totalPrice = goods.reduce((previousValue, currentValue) => {
-                    return previousValue.plus(currentValue.price.mul(currentValue.quantity));
-                }, new Decimal(0));
-                addNewGoods(cn, valueList[cn], totalPrice);
+                addNewGoods(cn, valueList[cn]);
             }
         }
 
@@ -143,13 +187,103 @@ function importTable() {
         console.log(tableValue.value);
     } catch (e) {
         console.error(e);
-        alert('导入错误，请确认你已粘贴正确的表格内容！');
+        alert('导入错误，请确认你已粘贴正确的表格内容！若持续出错请尝试重新从拼谷助手复制');
     }
 }
 
 function toggleImportModal() {
     showImportModal.value = !showImportModal.value;
     importValue.value = '';
+    importSuffix.value = '';
+    importPrefix.value = '';
+}
+
+function toggleEditGoodsModal() {
+    showGoodsEdit.value = !showGoodsEdit.value;
+    if (!showGoodsEdit.value) {
+        editingGoods.value = null;
+        isAddGoods.value = false;
+    }
+}
+
+function toggleEditCnModal() {
+    showCnEdit.value = !showCnEdit.value;
+}
+
+function toggleEditTitleModal() {
+    showTitleEdit.value = !showTitleEdit.value;
+}
+
+function toggleEditDDLModal() {
+    showDDLEdit.value = !showDDLEdit.value;
+}
+
+function toggleAddModal() {
+    showAdd.value = !showAdd.value;
+    editingAdd.value = showAdd.value ? new TableValue('', []) : null;
+}
+
+function confirmAdd() {
+    if (!editingAdd.value) {
+        return;
+    }
+    tableValue.value.push(editingAdd.value);
+    toggleAddModal();
+}
+
+function editGoods(goods: Goods, originList: Goods[], originIndex: number) {
+    toggleEditGoodsModal();
+    editingGoods.value = goods;
+    editingGoods.value.originList = originList;
+    editingGoods.value.originIndex = originIndex;
+}
+
+function addGoods(originList: Goods[]) {
+    toggleEditGoodsModal();
+    isAddGoods.value = true;
+    editingGoods.value = {
+        name: '',
+        price: new Decimal(0),
+        quantity: new Decimal(0),
+        originList,
+    };
+}
+
+function confirmAddGoods() {
+    if (!editingGoods.value || !editingGoods.value.originList) {
+        return;
+    }
+    editingGoods.value.originList.push({
+       name: editingGoods.value?.name,
+       price: editingGoods.value?.price,
+       quantity: editingGoods.value?.quantity,
+    });
+    toggleEditGoodsModal();
+}
+
+function deleteEditGoods() {
+    if (!editingGoods.value?.originList || editingGoods.value?.originIndex === undefined || editingGoods.value?.originIndex === -1) {
+        alert('删除失败！')
+        return;
+    }
+    if (confirm('您确认要删除吗？')) {
+        editingGoods.value.originList.splice(
+            editingGoods.value.originIndex,
+            1,
+        );
+        toggleEditGoodsModal();
+    }
+}
+
+function editCn(tableValue: TableValue) {
+    toggleEditCnModal();
+    editingTableValue.value = tableValue;
+}
+
+function deleteTableValue(index: number) {
+    if (confirm('您确认要删除吗?删除后该cn吃的谷子将一并删除')) {
+        tableValue.value.splice(index, 1);
+    }
 }
 
 onMounted(() => {
@@ -166,41 +300,88 @@ onMounted(() => {
 
 <template>
     <main class="wrap">
+        <!--  预览栏  -->
         <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
-            <header class="preview-header">
-                <div>标题</div>
-                <div>ddl</div>
-            </header>
-            <main class="preview-content">
-                <div style="flex: 3;" class="column">
-                    <div style="font-size: 1.4rem" class="header">cn</div>
-                </div>
-                <div style="flex: 6;" class="column">
-                    <div class="header">类型</div>
-                </div>
-                <div style="flex: 1" class="column">
-                    <div class="header">金额</div>
-                </div>
-            </main>
+            <div class="preview-wrap-table">
+                <header class="preview-header">
+                    <div>{{title}}</div>
+                    <div>{{ddl}}</div>
+                </header>
+                <main class="preview-content">
+                    <div style="flex: 3;" class="column">
+                        <div style="font-size: 1.4rem;border-left: 0.2rem solid black;" class="header">cn</div>
+                        <div :style="`
+                        background: ${index % 2 === 0 ? '#93dcfd' : 'white'};
+                        text-align: left;
+                        border-left: 0.2rem solid black;
+                        padding-left: .5rem;
+                    `"
+                             v-for="(data,index) in displayTableValue" class="row">{{ data.cn }}
+                        </div>
+                    </div>
+                    <div style="flex: 6;" class="column">
+                        <div class="header">类型</div>
+                        <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
+                             v-for="(data,index) in displayTableValue" class="row">
+                        <span v-for="(goods,goodsIndex) in data.goodsList">
+                            {{ goods.name }}{{ goods.quantity }} {{ goodsIndex !== data.goodsList.length - 1 ? '&nbsp;' : '' }}
+                        </span>
+                        </div>
+                    </div>
+                    <div style="flex: 1;border-right: 0.1rem solid black;" class="column">
+                        <div class="header">金额</div>
+                        <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
+                             v-for="(data,index) in displayTableValue" class="row">{{ data.totalPrice }}
+                        </div>
+                    </div>
+                </main>
+                <footer class="preview-footer">
+                    <div class="row">
+                        备注<span>CN+{{title}}</span> 肾完提交作业
+                    </div>
+                    <div class="row summary">
+                        <div>合计</div>
+                        <div>{{allTotalPrice}}</div>
+                    </div>
+                </footer>
+            </div>
+
+            <img src="./code.jpg">
         </div>
+        <!--  编辑栏  -->
         <div v-show="!showPreview" class="edit-wrap">
+            <h2 style="text-align: center">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
+            <h2 style="text-align: center">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
+
             <div v-for="(data, index) in tableValue" class="edit-item">
                 <div class="cn">
-                    <span>cn:</span>{{ data.cn }}
-                </div>
-                <div class="goods-list">
-                    <div v-for="(goods, goodsIndex) in data.goodsList" class="goods-item">
-                        {{ goods.name }} * {{ goods.quantity.toString() }}
+                    <span>cn：</span>
+                    {{ data.cn }}
+                    <div class="action">
+                        <edit-icon @click="editCn(data)" width="1.4rem" height="1.4rem"/>
+                        <delete-icon @click="deleteTableValue(index)" width="1.6rem" height="1.6rem"/>
                     </div>
                 </div>
+                <div class="goods-list">
+                    <span>类型：</span>
+                    <div @click="editGoods(goods, data.goodsList, goodsIndex)"
+                         v-for="(goods, goodsIndex) in data.goodsList" class="goods-item">
+                        {{ goods.name }} * {{ goods.quantity.toString() }}
+                        <edit-icon width="1.2rem" height="1.2rem"/>
+                    </div>
+                    <div style="background: palevioletred" class="goods-item" @click="addGoods(data.goodsList)">点击新增</div>
+                </div>
                 <div class="total-price">
+                    <span>金额：</span>
                     {{ data.totalPrice.toString() }}
-
                 </div>
                 <div class="actions">
                 </div>
             </div>
+            <button class="button" @click="toggleAddModal">新增</button>
         </div>
+
+        <!-- 工具栏 -->
         <div class="utils">
             <button @click="preview" class="button">{{ showPreview ? '返回修改' : '预览结果' }}</button>
             <button class="button" v-if="showPreview" @click="exportImage">导出图片</button>
@@ -217,10 +398,23 @@ onMounted(() => {
                         <label for="summary">汇总表</label>
                     </div>
                 </div>
-                <div class="import-area">
+                <div style="display:flex;flex-direction: column;gap: 1rem;">
+                    <div class="input-wrap">
+                        <label for="prefix">谷子前缀</label>
+                        <input v-model="importPrefix" id="prefix"/>
+                    </div>
+                    <div class="input-wrap">
+                        <label for="suffix">谷子后缀</label>
+                        <input v-model="importSuffix" id="suffix"/>
+                    </div>
+                    <div>
+                        前后缀含义：在导入数据时默认会使用拼谷助手表格内的谷名称如“ykn”，假如前缀为“涩谷”，后缀为“吧唧”，则最后生成的名称为“涩谷ykn吧唧”。可不填前后缀。
+                    </div>
+                </div>
+                <div class="import-area" style="margin-top: 1rem;">
                     <textarea
-                        placeholder="将从 拼谷助手-导出表格-复制表格内容 得到的文本粘贴于此，点击“导入”即可自动生成肾表"
-                        v-model="importValue" ref="textarea"/>
+                            placeholder="将从 拼谷助手-导出表格-复制表格内容 得到的文本粘贴于此，点击“导入”即可自动生成肾表"
+                            v-model="importValue" ref="textarea"/>
                 </div>
                 <div class="btn-bar">
                     <button class="button" @click="toggleImportModal">取消</button>
@@ -228,170 +422,91 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
+        <div v-if="showGoodsEdit && editingGoods" class="modal goods transparent">
+            <div @click="toggleEditGoodsModal" class="modal-mask"></div>
+            <div class="modal-wrapper">
+                <h2>编辑谷子</h2>
+                <div v-if="!isAddGoods">此处的修改会自动保存</div>
+                <div class="input-wrap">
+                    <label for="name">谷子名称</label>
+                    <input v-model="editingGoods.name" id="name"/>
+                </div>
+                <div class="input-wrap">
+                    <label for="price">谷子单价</label>
+                    <input type="number" id="price" :value="editingGoods.price"
+                           @input="(e) => editingGoods!.price = new Decimal(e?.target?.value || 0)"/>
+                </div>
+                <div class="input-wrap">
+                    <label for="quantity">谷子数量</label>
+                    <input type="number" id="quantity" :value="editingGoods.quantity"
+                           @input="(e) => editingGoods!.quantity = new Decimal(e?.target?.value || 0)"/>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="toggleEditGoodsModal">返回</button>
+                    <button v-if="isAddGoods" class="button" @click="confirmAddGoods">新增</button>
+                    <button v-else class="button" @click="deleteEditGoods">删除</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showCnEdit && editingTableValue" class="modal goods transparent">
+            <div @click="toggleEditCnModal" class="modal-mask"></div>
+            <div class="modal-wrapper">
+                <h2>编辑cn</h2>
+                <div>此处的修改会自动保存</div>
+                <div class="input-wrap">
+                    <label for="cn">cn</label>
+                    <input v-model="editingTableValue.cn" id="cn"/>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="toggleEditCnModal">返回</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showDDLEdit" class="modal goods transparent">
+            <div @click="toggleEditDDLModal" class="modal-mask"></div>
+            <div class="modal-wrapper">
+                <h2>编辑ddl</h2>
+                <div>此处的修改会自动保存</div>
+                <div class="input-wrap">
+                    <label for="ddl">ddl</label>
+                    <input v-model="ddl" id="ddl"/>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="toggleEditDDLModal">返回</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showTitleEdit" class="modal goods transparent">
+            <div @click="toggleEditTitleModal" class="modal-mask"></div>
+            <div class="modal-wrapper">
+                <h2>编辑标题</h2>
+                <div>此处的修改会自动保存</div>
+                <div class="input-wrap">
+                    <label for="title">标题</label>
+                    <input v-model="title" id="title"/>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="toggleEditTitleModal">返回</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showAdd && editingAdd" class="modal goods transparent">
+            <div @click="toggleAddModal" class="modal-mask"></div>
+            <div class="modal-wrapper">
+                <h2>新增表内容</h2>
+                <div class="input-wrap">
+                    <label for="cn">cn</label>
+                    <input v-model="editingAdd.cn" id="cn"/>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="toggleAddModal">返回</button>
+                    <button class="button" @click="confirmAdd">确认新增</button>
+                </div>
+            </div>
+        </div>
         <canvas v-show="false" id="canvas"></canvas>
     </main>
 </template>
 
-<style lang="less">
-html {
-    font-size: 87.5%;
-}
-
-body {
-    margin: 0;
-}
-
-.wrap {
-    padding: 2rem .4rem 7rem;
-    overflow: auto;
-    height: 100vh;
-    box-sizing: border-box;
-
-    .edit-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-
-        .edit-item {
-            border-radius: .6rem;
-            background: aliceblue;
-            padding: .5rem;
-            font-size: 1.3rem;
-            display: flex;
-            flex-direction: column;
-
-            .cn {
-                span {
-                    font-size: 1.1rem;
-                    color: gray;
-                    margin-right: .4rem;
-                }
-                font-weight: 600;
-                padding: .5rem;
-                border-bottom: .1rem solid #85d9f8;
-            }
-
-            .goods-list {
-                padding: .5rem;
-                display: flex;
-                gap: .1rem;
-                flex: 1;
-                border-bottom: .1rem solid #85d9f8;
-            }
-
-            .total-price {
-                width: 4rem;
-                border-bottom: .1rem solid #85d9f8;
-            }
-
-            .actions {
-                width: 4rem;
-            }
-        }
-    }
-
-    .utils {
-        background: white;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        padding: 1rem;
-        box-sizing: border-box;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        box-shadow: -.1rem -.2rem .2rem rgba(0, 0, 0, 0.05);
-
-        .button {
-            border: none;
-            font-weight: 300;
-            border-radius: 1rem;
-            padding: .5rem 2rem;
-            font-size: 1.4rem;
-            background: #02BBFF;
-        }
-
-        .modal {
-            text-align: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            width: 100vw;
-            height: 100vh;
-            background: white;
-            padding: .5rem;
-            overflow: hidden;
-            box-sizing: border-box;
-
-            .radio {
-                margin-bottom: 1rem;
-                font-size: 1.3rem;
-                align-items: center;
-                display: flex;
-                justify-content: space-around;
-            }
-
-            .btn-bar {
-                display: flex;
-                justify-content: space-around;
-                margin-top: 2rem;
-            }
-
-            .import-area {
-                display: flex;
-
-                textarea {
-                    flex: 1;
-                    display: block;
-                    resize: none;
-                    font-size: 1.4rem;
-                    min-height: 10rem;
-                }
-            }
-        }
-    }
-
-    .preview-wrap {
-        font-family: "Songti SC", sans-serif;
-        font-weight: 900;
-        width: fit-content;
-
-        .preview-header {
-            border: 0.2rem solid black;
-            color: white;
-            font-size: 1.6rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #02BBFF;
-            min-width: 62.4rem;
-            height: 6.6rem;
-        }
-
-        .preview-content {
-            display: flex;
-            width: 100%;
-
-            .column {
-                .header {
-                    border-inline: 0.1rem solid black;
-                    border-bottom: .2rem solid black;
-                    font-size: 1.2rem;
-                    line-height: 2.4rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #FF99BB;
-                }
-
-                .row {
-
-                }
-            }
-        }
-    }
-}
-</style>
+<style lang="less" src="./style.less"></style>
