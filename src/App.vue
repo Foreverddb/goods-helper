@@ -18,9 +18,13 @@ const showTitleEdit = ref(false);
 const showDDLEdit = ref(false);
 const showAdd = ref(false);
 const isAddGoods = ref(false);
+const codeLoaded = ref(false);
+const showImage = ref(false);
+const image = ref<HTMLImageElement>();
 
 const title = ref('标题');
 const ddl = ref('ddl');
+const innerHeight = ref('100vh');
 
 const importType = ref('order');
 const importPrefix = ref('');
@@ -64,6 +68,10 @@ function preview() {
 }
 
 async function exportImage() {
+    if (!codeLoaded.value) {
+        alert('表格暂未加载成功， 请稍等片刻重试！');
+        return;
+    }
     const node = document.getElementById('preview-wrap') as Node;
     const svgUrl = await dom2Image.toSvg(node);
     const img = new Image();
@@ -73,24 +81,30 @@ async function exportImage() {
         const width = target.width * imgScale;
         const height = target.height * imgScale;
 
+        const isSafari = /Safari/.test(navigator.userAgent) && /iPhone/.test(navigator.userAgent);
+        if (isSafari) {
+            // ios safari无法通过canvas渲染高精图
+            image.value = img;
+            showImage.value = true;
+            return;
+        }
+
         const canvas = document.getElementById('canvas') as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
 
         canvas.width = width;
         canvas.height = height;
+        img.width = width;
+        img.height = height;
 
         ctx?.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob((blob) => {
-            if (!blob) {
-                return;
-            }
+        const url = canvas.toDataURL('image/png');
 
-            const link = document.createElement('a');
-            link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-        });
+        const link = document.createElement('a');
+        link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
+        link.href = url;
+        link.click();
     };
 
     img.src = svgUrl;
@@ -287,6 +301,8 @@ function deleteTableValue(index: number) {
 }
 
 onMounted(() => {
+    innerHeight.value = window.innerHeight + 'px';
+
     const textareaDom = textarea.value;
     if (!textareaDom) {
         return;
@@ -299,86 +315,90 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="wrap">
-        <!--  预览栏  -->
-        <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
-            <div class="preview-wrap-table">
-                <header class="preview-header">
-                    <div>{{title}}</div>
-                    <div>{{ddl}}</div>
-                </header>
-                <main class="preview-content">
-                    <div style="flex: 3;" class="column">
-                        <div style="font-size: 1.4rem;border-left: 0.2rem solid black;" class="header">cn</div>
-                        <div :style="`
+    <main :style="{
+        '--inner-height': innerHeight,
+    }" class="wrap">
+        <div class="content">
+            <!--  预览栏  -->
+            <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
+                <div class="preview-wrap-table">
+                    <header class="preview-header">
+                        <div>{{title}}</div>
+                        <div>{{ddl}}</div>
+                    </header>
+                    <main class="preview-content">
+                        <div style="flex: 3;" class="column">
+                            <div style="font-size: 1.4rem;border-left: 0.2rem solid black;" class="header">cn</div>
+                            <div :style="`
                         background: ${index % 2 === 0 ? '#93dcfd' : 'white'};
                         text-align: left;
                         border-left: 0.2rem solid black;
                         padding-left: .5rem;
                     `"
-                             v-for="(data,index) in displayTableValue" class="row">{{ data.cn }}
+                                 v-for="(data,index) in displayTableValue" class="row">{{ data.cn }}
+                            </div>
                         </div>
-                    </div>
-                    <div style="flex: 6;" class="column">
-                        <div class="header">类型</div>
-                        <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
-                             v-for="(data,index) in displayTableValue" class="row">
+                        <div style="flex: 6;" class="column">
+                            <div class="header">类型</div>
+                            <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
+                                 v-for="(data,index) in displayTableValue" class="row">
                         <span v-for="(goods,goodsIndex) in data.goodsList">
                             {{ goods.name }}{{ goods.quantity }} {{ goodsIndex !== data.goodsList.length - 1 ? '&nbsp;' : '' }}
                         </span>
+                            </div>
+                        </div>
+                        <div style="flex: 1;border-right: 0.1rem solid black;" class="column">
+                            <div class="header">金额</div>
+                            <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
+                                 v-for="(data,index) in displayTableValue" class="row">{{ data.totalPrice }}
+                            </div>
+                        </div>
+                    </main>
+                    <footer class="preview-footer">
+                        <div class="row">
+                            备注<span>CN+{{title}}</span> 肾完提交作业
+                        </div>
+                        <div class="row summary">
+                            <div>合计</div>
+                            <div>{{allTotalPrice}}</div>
+                        </div>
+                    </footer>
+                </div>
+
+                <img @load="codeLoaded = true" src="./code.jpg">
+            </div>
+            <!--  编辑栏  -->
+            <div v-show="!showPreview" class="edit-wrap">
+                <h2 style="text-align: center">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
+                <h2 style="text-align: center">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
+
+                <div v-for="(data, index) in tableValue" class="edit-item">
+                    <div class="cn">
+                        <span>cn：</span>
+                        {{ data.cn }}
+                        <div class="action">
+                            <edit-icon @click="editCn(data)" width="1.4rem" height="1.4rem"/>
+                            <delete-icon @click="deleteTableValue(index)" width="1.6rem" height="1.6rem"/>
                         </div>
                     </div>
-                    <div style="flex: 1;border-right: 0.1rem solid black;" class="column">
-                        <div class="header">金额</div>
-                        <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
-                             v-for="(data,index) in displayTableValue" class="row">{{ data.totalPrice }}
+                    <div class="goods-list">
+                        <span>类型：</span>
+                        <div @click="editGoods(goods, data.goodsList, goodsIndex)"
+                             v-for="(goods, goodsIndex) in data.goodsList" class="goods-item">
+                            {{ goods.name }} * {{ goods.quantity.toString() }}
+                            <edit-icon width="1.2rem" height="1.2rem"/>
                         </div>
+                        <div style="background: palevioletred" class="goods-item" @click="addGoods(data.goodsList)">点击新增</div>
                     </div>
-                </main>
-                <footer class="preview-footer">
-                    <div class="row">
-                        备注<span>CN+{{title}}</span> 肾完提交作业
+                    <div class="total-price">
+                        <span>金额：</span>
+                        {{ data.totalPrice.toString() }}
                     </div>
-                    <div class="row summary">
-                        <div>合计</div>
-                        <div>{{allTotalPrice}}</div>
+                    <div class="actions">
                     </div>
-                </footer>
+                </div>
+                <button class="button" @click="toggleAddModal">新增</button>
             </div>
-
-            <img src="./code.jpg">
-        </div>
-        <!--  编辑栏  -->
-        <div v-show="!showPreview" class="edit-wrap">
-            <h2 style="text-align: center">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
-            <h2 style="text-align: center">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
-
-            <div v-for="(data, index) in tableValue" class="edit-item">
-                <div class="cn">
-                    <span>cn：</span>
-                    {{ data.cn }}
-                    <div class="action">
-                        <edit-icon @click="editCn(data)" width="1.4rem" height="1.4rem"/>
-                        <delete-icon @click="deleteTableValue(index)" width="1.6rem" height="1.6rem"/>
-                    </div>
-                </div>
-                <div class="goods-list">
-                    <span>类型：</span>
-                    <div @click="editGoods(goods, data.goodsList, goodsIndex)"
-                         v-for="(goods, goodsIndex) in data.goodsList" class="goods-item">
-                        {{ goods.name }} * {{ goods.quantity.toString() }}
-                        <edit-icon width="1.2rem" height="1.2rem"/>
-                    </div>
-                    <div style="background: palevioletred" class="goods-item" @click="addGoods(data.goodsList)">点击新增</div>
-                </div>
-                <div class="total-price">
-                    <span>金额：</span>
-                    {{ data.totalPrice.toString() }}
-                </div>
-                <div class="actions">
-                </div>
-            </div>
-            <button class="button" @click="toggleAddModal">新增</button>
         </div>
 
         <!-- 工具栏 -->
@@ -386,7 +406,7 @@ onMounted(() => {
             <button @click="preview" class="button">{{ showPreview ? '返回修改' : '预览结果' }}</button>
             <button class="button" v-if="showPreview" @click="exportImage">导出图片</button>
             <button class="button" v-if="!showPreview" @click="toggleImportModal">导入表格</button>
-            <div v-show="showImportModal" class="modal">
+            <div v-if="showImportModal" class="modal">
                 <h2>从拼谷助手导入</h2>
                 <div class="radio">
                     <div>
@@ -418,6 +438,7 @@ onMounted(() => {
                 </div>
                 <div class="btn-bar">
                     <button class="button" @click="toggleImportModal">取消</button>
+                    <button class="button" @click="importValue = '';importSuffix = '';importPrefix = '';">清空</button>
                     <button class="button" @click="importTable">导入</button>
                 </div>
             </div>
@@ -502,6 +523,19 @@ onMounted(() => {
                 <div class="btn-bar">
                     <button class="button" @click="toggleAddModal">返回</button>
                     <button class="button" @click="confirmAdd">确认新增</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showImage" class="modal goods transparent">
+            <div @click="showImage = false" class="modal-mask"></div>
+            <div class="modal-wrapper" id="image-downloader">
+                <h2>请长按下面图片-选择“共享”-储存图片</h2>
+                <div>储存失败或图片不全可返回重新导出图片</div>
+                <div class="image-wrapper">
+                    <img :src="image.src" :height="image.height" :width="image.width" />
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="showImage = false">返回</button>
                 </div>
             </div>
         </div>
