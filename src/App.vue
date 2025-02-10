@@ -64,6 +64,10 @@ const displayTableValue = computed(() => {
 });
 
 function preview() {
+    const wrap = document.getElementById('wrap');
+    if (wrap) {
+        wrap.scrollLeft = 0;
+    }
     showPreview.value = !showPreview.value;
 }
 
@@ -84,6 +88,8 @@ async function exportImage() {
         const isSafari = /Safari/.test(navigator.userAgent) && /iPhone/.test(navigator.userAgent);
         if (isSafari) {
             // ios safari无法通过canvas渲染高精图
+            img.width = width;
+            img.height = height;
             image.value = img;
             showImage.value = true;
             return;
@@ -318,7 +324,7 @@ onMounted(() => {
     <main :style="{
         '--inner-height': innerHeight,
     }" class="wrap">
-        <div class="content">
+        <div class="content" id="wrap">
             <!--  预览栏  -->
             <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
                 <div class="preview-wrap-table">
