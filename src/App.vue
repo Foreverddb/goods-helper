@@ -20,6 +20,7 @@ const showAdd = ref(false);
 const isAddGoods = ref(false);
 const codeLoaded = ref(false);
 const showImage = ref(false);
+const loading = ref(false);
 const image = ref<HTMLImageElement>();
 
 const title = ref('标题');
@@ -76,6 +77,7 @@ async function exportImage() {
         alert('表格暂未加载成功， 请稍等片刻重试！');
         return;
     }
+    loading.value = true;
     const node = document.getElementById('preview-wrap') as Node;
     const svgUrl = await dom2Image.toSvg(node);
     const img = new Image();
@@ -90,6 +92,7 @@ async function exportImage() {
             // ios safari无法通过canvas渲染高精图
             img.width = width;
             img.height = height;
+            loading.value = false;
             image.value = img;
             showImage.value = true;
             return;
@@ -111,6 +114,8 @@ async function exportImage() {
         link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
         link.href = url;
         link.click();
+        loading.value = false;
+
     };
 
     img.src = svgUrl;
@@ -324,7 +329,9 @@ onMounted(() => {
     <main :style="{
         '--inner-height': innerHeight,
     }" class="wrap">
-        <div class="content" id="wrap">
+        <div :style="{
+            backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
+        }" class="content" id="wrap">
             <!--  预览栏  -->
             <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
                 <div class="preview-wrap-table">
@@ -375,8 +382,8 @@ onMounted(() => {
             </div>
             <!--  编辑栏  -->
             <div v-show="!showPreview" class="edit-wrap">
-                <h2 style="text-align: center">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
-                <h2 style="text-align: center">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
+                <h2 class="title">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
+                <h2 class="title">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
 
                 <div v-for="(data, index) in tableValue" class="edit-item">
                     <div class="cn">
@@ -403,13 +410,14 @@ onMounted(() => {
                     <div class="actions">
                     </div>
                 </div>
-                <button class="button" @click="toggleAddModal">新增</button>
             </div>
         </div>
 
         <!-- 工具栏 -->
         <div class="utils">
             <button @click="preview" class="button">{{ showPreview ? '返回修改' : '预览结果' }}</button>
+            <button class="button" v-if="!showPreview && tableValue.length" @click="tableValue = []">清空</button>
+            <button class="button"  v-if="!showPreview" @click="toggleAddModal">新增</button>
             <button class="button" v-if="showPreview" @click="exportImage">导出图片</button>
             <button class="button" v-if="!showPreview" @click="toggleImportModal">导入表格</button>
             <div v-if="showImportModal" class="modal">
@@ -543,6 +551,11 @@ onMounted(() => {
                 <div class="btn-bar">
                     <button class="button" @click="showImage = false">返回</button>
                 </div>
+            </div>
+        </div>
+        <div v-if="loading" class="modal goods transparent">
+            <div class="modal-mask loading">
+                加载中...
             </div>
         </div>
         <canvas v-show="false" id="canvas"></canvas>
