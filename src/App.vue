@@ -381,7 +381,7 @@ onMounted(() => {
                         </div>
                         <div style="flex: 1;border-right: 0.1rem solid black;" class="column">
                             <div class="header" id="priceHeader">金额</div>
-                            <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
+                            <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};border-right:0.1rem solid black;`"
                                  v-for="(data,index) in displayTableValue" class="row">{{ data.totalPrice }}
                             </div>
                         </div>
