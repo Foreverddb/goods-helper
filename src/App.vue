@@ -323,6 +323,11 @@ watch(showPreview, () => {
    });
 });
 
+const fontFamily = ref('my-song, SimSun, "宋体", "Songti SC", sans-serif');
+function changeFont(e) {
+    fontFamily.value = e.target.value;
+}
+
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
 
@@ -345,7 +350,9 @@ onMounted(() => {
             backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
         }" class="content" id="wrap">
             <!--  预览栏  -->
-            <div v-show="showPreview" id="preview-wrap" class="preview-wrap">
+            <div v-show="showPreview" id="preview-wrap" :style="{
+                fontFamily,
+            }" class="preview-wrap">
                 <div class="preview-wrap-table">
                     <header class="preview-header">
                         <div>{{title}}</div>
@@ -430,6 +437,13 @@ onMounted(() => {
             <button @click="preview" class="button">{{ showPreview ? '返回修改' : '预览结果' }}</button>
             <button class="button" v-if="!showPreview && tableValue.length" @click="tableValue = []">清空</button>
             <button class="button"  v-if="!showPreview" @click="toggleAddModal">新增</button>
+            <div v-if="showPreview">
+                <div>字体选择</div>
+                <select @change="changeFont" name="pets" id="pet-select">
+                    <option selected value="my-song, SimSun, '宋体', 'Songti SC', sans-serif">宋体</option>
+                    <option value="">默认</option>
+                </select>
+            </div>
             <button class="button" v-if="showPreview" @click="exportImage">导出图片</button>
             <button class="button" v-if="!showPreview" @click="toggleImportModal">导入表格</button>
             <div v-if="showImportModal" class="modal">
