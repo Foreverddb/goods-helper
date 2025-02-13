@@ -112,11 +112,22 @@ body {
         font-weight: 900;
         width: fit-content;
         display: flex;
+        background: white;
 
-        img {
+        .aside {
             flex-shrink: 0;
-            height: fit-content;
+            height: 100%;
             min-width: 22rem;
+            display: flex;
+            flex-direction: column;
+            background-size: 10%;
+            background-repeat: repeat;
+
+            .yukki {
+                width: 100%;
+                flex: 1;
+                height: 0;
+            }
         }
 
         .preview-header {

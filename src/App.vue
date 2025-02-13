@@ -311,8 +311,12 @@ function deleteTableValue(index: number) {
     }
 }
 
+const imgHeight = ref('100%');
+
 watch(showPreview, () => {
    nextTick(() => {
+       const preview = document.getElementById('preview-wrap');
+       preview && (imgHeight.value = getComputedStyle(preview).height);
        const priceHeader = document.getElementById('priceHeader');
        const allTotalPrice =  document.getElementById('allTotalPrice');
 
@@ -396,8 +400,16 @@ onMounted(() => {
                         </div>
                     </footer>
                 </div>
-
-                <img @load="codeLoaded = true" src="./code.jpg">
+                <div class="aside" :style="{
+                    height: imgHeight,
+                    backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
+                }">
+                    <img @load="codeLoaded = true" src="./code.jpg">
+<!--                    <div class="yukki" :style="{-->
+<!--                        backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,-->
+<!--                    }">-->
+<!--                    </div>-->
+                </div>
             </div>
             <!--  编辑栏  -->
             <div v-show="!showPreview" class="edit-wrap">
