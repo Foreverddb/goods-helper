@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import dom2Image from 'dom-to-image';
 import dayjs from 'dayjs';
-import {computed, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import type {Goods} from '@/typings.ts';
 import {TableValue} from '@/typings.ts';
 import Decimal from 'decimal.js';
@@ -311,6 +311,18 @@ function deleteTableValue(index: number) {
     }
 }
 
+watch(showPreview, () => {
+   nextTick(() => {
+       const priceHeader = document.getElementById('priceHeader');
+       const allTotalPrice =  document.getElementById('allTotalPrice');
+
+       if (!priceHeader || !allTotalPrice) {
+           return;
+       }
+      allTotalPrice.style.width = getComputedStyle(priceHeader).width;
+   });
+});
+
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
 
@@ -361,7 +373,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <div style="flex: 1;border-right: 0.1rem solid black;" class="column">
-                            <div class="header">金额</div>
+                            <div class="header" id="priceHeader">金额</div>
                             <div :style="`background: ${index % 2 === 0 ? '#93dcfd' : 'white'};`"
                                  v-for="(data,index) in displayTableValue" class="row">{{ data.totalPrice }}
                             </div>
@@ -373,7 +385,7 @@ onMounted(() => {
                         </div>
                         <div class="row summary">
                             <div>合计</div>
-                            <div>{{allTotalPrice}}</div>
+                            <div id="allTotalPrice">{{allTotalPrice}}</div>
                         </div>
                     </footer>
                 </div>
