@@ -18,7 +18,7 @@ const title = ref("标题asdfd")
 .navbar-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  //justify-content: center;
 
   position: fixed;
   top: 0;
@@ -30,8 +30,13 @@ const title = ref("标题asdfd")
 
   font-size: 24px;
 
+  //margin: 5px;
+  //border-radius: 5px;
+
   .goods-title {
-   font-family: "Noto Sans SC", serif;
+    font-family: "Noto Sans SC", serif;
+
+    margin: 10px;
   }
 
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {iconArray} from "@/assets/icons"
 
 const props = withDefaults(
@@ -11,7 +11,10 @@ const props = withDefaults(
     }
 )
 
-const logoUrl = new URL(`../assets/${props.bandTheme}/${props.bandTheme}.png`, import.meta.url).href
+const showPreview = defineModel('preview')
+const theme = defineModel('theme')
+
+const logoUrl = computed(() => new URL(`../assets/${props.bandTheme}/${props.bandTheme}.png`, import.meta.url).href)
 
 
 // 操作列表
@@ -19,7 +22,8 @@ const actions = [
     "add",
     "preview",
     "import",
-    "clear"
+    "clear",
+    "theme"
 ]
 
 const menu = ref<HTMLElement>()
@@ -31,9 +35,9 @@ const openMenu = () => {
   for (let i = 0; i < childrenElement.length; i++) {
     const item = childrenElement[i] as HTMLElement
 
-    item.style.transform = `translateY(-${(i + 1) * 60}px)`
+    item.style.transform = `translateY(-${i * 60}px)`
     item.style.opacity = 1
-    console.log(`translateY(-${(i + 1) * 60}px)`)
+    console.log(`translateY(-${i * 60}px)`)
 
   }
 
@@ -45,7 +49,6 @@ const closeMenu = () => {
   for (let i = 0; i < childrenElement.length; i++) {
     const item = childrenElement[i] as HTMLElement
     item.style.transform = `translateY(0)`
-    console.log(`translateY(${(i + 1) * 60}px)`)
     item.style.opacity = 0
   }
 
@@ -56,15 +59,35 @@ const toggleMenu = () => {
   isOpened.value ? openMenu() : closeMenu();
 }
 
+// 操作菜单
 const actionIndexFunc = (action: string) => {
+  console.log(action);
   if (action === "add") {
 
   } else if (action === "preview") {
-
+    preview()
   } else if (action === "import") {
 
   } else if (action === "clear") {
 
+  } else if (action === "theme") {
+    switchTheme()
+  }
+}
+
+function preview() {
+  const wrap = document.getElementById('wrap');
+  if (wrap) {
+    wrap.scrollLeft = 0;
+  }
+  showPreview.value = !showPreview.value;
+}
+
+function switchTheme() {
+  if (theme.value === "popipa") {
+    theme.value = "roselia"
+  } else {
+    theme.value = "popipa"
   }
 }
 
@@ -76,8 +99,8 @@ const actionIndexFunc = (action: string) => {
       <img :src="logoUrl" class="logo" alt="logo">
     </div>
     <div class="action-content" ref="menu">
-      <div class="action-container" v-for="(action, index) in actions">
-        <img :src="iconArray[index]" :alt="action" style="height: 30px"/>
+      <div class="action-container" v-for="(action, index) in actions" @click="actionIndexFunc(action)">
+        <img v-if="!showPreview" :src="iconArray[index]" :alt="action" style="height: 30px"/>
       </div>
     </div>
   </div>
@@ -119,7 +142,7 @@ const actionIndexFunc = (action: string) => {
     transition: all 0.3s ease-in-out;
 
     position: absolute;
-    bottom: -25px;
+    bottom: 40px;
     right: 10px;
 
     width: 50px;

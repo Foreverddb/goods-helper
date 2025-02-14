@@ -339,6 +339,8 @@ function changeFont(e) {
  */
 const bandTheme = ref("popipa")
 
+watch(bandTheme, () => console.log(bandTheme.value))
+
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
 
@@ -361,7 +363,7 @@ onMounted(() => {
         class="wrap"
     >
         <div :style="{
-            backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
+            backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
         }" class="content" id="wrap">
             <!--  预览栏  -->
             <div v-show="showPreview" id="preview-wrap" :style="{
@@ -415,16 +417,16 @@ onMounted(() => {
                     backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
                 }">
                     <img @load="codeLoaded = true" src="./code.jpg">
-<!--                    <div class="yukki" :style="{-->
-<!--                        backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,-->
-<!--                    }">-->
-<!--                    </div>-->
                 </div>
             </div>
             <!--  编辑栏  -->
             <div v-show="!showPreview" class="edit-wrap" :class="bandTheme">
                 <navigation-bar></navigation-bar>
-                <action-menu :bandTheme="bandTheme"/>
+                <action-menu
+                    :band-theme="bandTheme"
+                    v-model:theme="bandTheme"
+                    v-model:preview="showPreview"
+                />
 
 <!--                <h2 class="title">{{title}} <edit-icons @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>-->
 <!--                <h2 class="title">{{ddl}} <edit-icons @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>-->
@@ -458,7 +460,7 @@ onMounted(() => {
         </div>
 
         <!-- 工具栏 -->
-        <div class="utils">
+        <div class="utils" v-if="showPreview">
             <button @click="preview" class="button">{{ showPreview ? '返回修改' : '预览结果' }}</button>
             <button class="button" v-if="!showPreview && tableValue.length" @click="tableValue = []">清空</button>
             <button class="button"  v-if="!showPreview" @click="toggleAddModal">新增</button>
