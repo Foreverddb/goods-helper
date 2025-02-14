@@ -421,7 +421,10 @@ onMounted(() => {
             </div>
             <!--  编辑栏  -->
             <div v-show="!showPreview" class="edit-wrap" :class="bandTheme">
-                <navigation-bar></navigation-bar>
+                <navigation-bar
+                    v-model:title="title"
+                    v-model:deadline="ddl"
+                ></navigation-bar>
                 <action-menu
                     :band-theme="bandTheme"
                     v-model:theme="bandTheme"

@@ -36,7 +36,7 @@ const openMenu = () => {
     const item = childrenElement[i] as HTMLElement
 
     item.style.transform = `translateY(-${i * 60}px)`
-    item.style.opacity = 1
+    item.style.opacity = 0.8
     console.log(`translateY(-${i * 60}px)`)
 
   }
