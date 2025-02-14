@@ -114,6 +114,8 @@ const editDeadline = () => {
     align-items: center;
 
     .input-content {
+      display: flex;
+      align-items: center;
       margin: 0 20px;
       flex: 1;
 
