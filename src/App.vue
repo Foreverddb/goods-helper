@@ -7,6 +7,8 @@ import {TableValue} from '@/typings.ts';
 import Decimal from 'decimal.js';
 import EditIcon from "@/edit-icon.vue";
 import DeleteIcon from "@/delete-icon.vue";
+import NavigationBar from "@/components/navigation-bar.vue";
+import ActionMenu from "@/components/action-menu.vue";
 
 const imgScale = 5;
 const showPreview = ref(false);
@@ -332,6 +334,11 @@ function changeFont(e) {
     fontFamily.value = e.target.value;
 }
 
+/**
+ * 乐队主题切换
+ */
+const bandTheme = ref("popipa")
+
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
 
@@ -347,9 +354,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <main :style="{
-        '--inner-height': innerHeight,
-    }" class="wrap">
+    <main
+        :style="{
+            '--inner-height': innerHeight,
+        }"
+        class="wrap"
+    >
         <div :style="{
             backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
         }" class="content" id="wrap">
@@ -412,9 +422,12 @@ onMounted(() => {
                 </div>
             </div>
             <!--  编辑栏  -->
-            <div v-show="!showPreview" class="edit-wrap">
-                <h2 class="title">{{title}} <edit-icon @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>
-                <h2 class="title">{{ddl}} <edit-icon @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>
+            <div v-show="!showPreview" class="edit-wrap" :class="bandTheme">
+                <navigation-bar></navigation-bar>
+                <action-menu :bandTheme="bandTheme"/>
+
+<!--                <h2 class="title">{{title}} <edit-icons @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>-->
+<!--                <h2 class="title">{{ddl}} <edit-icons @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>-->
 
                 <div v-for="(data, index) in tableValue" class="edit-item">
                     <div class="cn">
@@ -598,6 +611,7 @@ onMounted(() => {
         </div>
         <canvas v-show="false" id="canvas"></canvas>
     </main>
+
 </template>
 
 <style lang="less" src="./style.less"></style>
