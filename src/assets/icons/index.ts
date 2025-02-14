@@ -5,10 +5,12 @@ import importIcon from "./import.svg"
 import editIcon from "./edit.svg"
 import themeIcon from "./theme.svg"
 import deadlineIcon from "./deadline.svg"
+import confirmIcon from "./confirm.svg"
 
 export const iconArray = [addIcon, previewIcon, importIcon, deleteIcon, themeIcon, editIcon]
 
 export default {
     iconArray,
-    deadlineIcon
+    deadlineIcon,
+    confirmIcon,
 }
