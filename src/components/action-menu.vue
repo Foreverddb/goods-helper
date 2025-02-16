@@ -54,9 +54,13 @@ const closeMenu = () => {
 
 }
 
-const toggleMenu = () => {
-  isOpened.value = !isOpened.value
-  isOpened.value ? openMenu() : closeMenu();
+const toggleMenu = (event: Event) => {
+  const target = event.target as HTMLElement
+  console.log(target.id !== "theme" && (target as HTMLImageElement).alt !== "theme", target, (target as HTMLImageElement).alt)
+  if (target.id !== "theme" && (target as HTMLImageElement).alt !== "theme") {
+    isOpened.value = !isOpened.value
+    isOpened.value ? openMenu() : closeMenu();
+  }
 }
 
 // 操作菜单
@@ -83,12 +87,18 @@ function preview() {
   showPreview.value = !showPreview.value;
 }
 
+let themeIdx = 0
+const themeList = [
+    'popipa',
+    'roselia',
+    'ras',
+    'hhw',
+    'monica',
+    'mygo',
+]
 function switchTheme() {
-  if (theme.value === "popipa") {
-    theme.value = "roselia"
-  } else {
-    theme.value = "popipa"
-  }
+  const curIdx = (++themeIdx) % themeList.length
+  theme.value = themeList[curIdx]
 }
 
 </script>
@@ -99,7 +109,7 @@ function switchTheme() {
       <img :src="logoUrl" class="logo" alt="logo">
     </div>
     <div class="action-content" ref="menu">
-      <div class="action-container" v-for="(action, index) in actions" @click="actionIndexFunc(action)">
+      <div class="action-container" v-for="(action, index) in actions" @click="actionIndexFunc(action)" :id="action">
         <img v-if="!showPreview" :src="iconArray[index]" :alt="action" style="height: 30px"/>
       </div>
     </div>
