@@ -8,6 +8,7 @@ import Decimal from 'decimal.js';
 import NavigationBar from "@/components/navigation-bar.vue";
 import ActionMenu from "@/components/action-menu.vue";
 import GoodCard from "@/components/good-card.vue";
+import ImportModal from "@/components/import-modal.vue";
 
 const imgScale = 5;
 const showPreview = ref(false);
@@ -216,6 +217,7 @@ function importTable() {
         alert('导入错误，请确认你已粘贴正确的表格内容！若持续出错请尝试重新从拼谷助手复制');
     }
 }
+provide("importTable", importTable);
 
 function toggleImportModal() {
     showImportModal.value = !showImportModal.value;
@@ -223,6 +225,7 @@ function toggleImportModal() {
     importSuffix.value = '';
     importPrefix.value = '';
 }
+provide("toggleImportModal", toggleImportModal)
 
 function toggleEditGoodsModal() {
     showGoodsEdit.value = !showGoodsEdit.value;
@@ -449,6 +452,14 @@ onMounted(() => {
                     v-model:show="showGoodsEdit"
                     v-model:edit="editingGoods"
                     v-model:is-added="isAddGoods"
+                />
+
+                <import-modal
+                    v-model:import="importType"
+                    v-model:prefix="importPrefix"
+                    v-model:suffix="importSuffix"
+                    v-model:value="importValue"
+                    v-model:show="showImportModal"
                 />
 
             </div>

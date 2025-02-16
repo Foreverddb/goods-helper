@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, provide, ref} from "vue";
+import {computed, inject, provide, ref} from "vue";
 import {iconArray} from "@/assets/icons"
 import {TableValue} from "@/typings.ts";
 import AddModal from "@/components/add-modal.vue";
@@ -12,6 +12,8 @@ const props = withDefaults(
       bandTheme: "popipa"
     }
 )
+
+const toggleImportModal = inject("toggleImportModal")
 
 const showPreview = defineModel('preview')
 const theme = defineModel('theme')
@@ -50,7 +52,6 @@ const openMenu = () => {
 
     item.style.transform = `translateY(-${i * 60}px)`
     item.style.opacity = 0.8
-    console.log(`translateY(-${i * 60}px)`)
 
   }
 
@@ -69,7 +70,6 @@ const closeMenu = () => {
 
 const toggleMenu = (event: Event) => {
   const target = event.target as HTMLElement
-  console.log(target.id !== "theme" && (target as HTMLImageElement).alt !== "theme", target, (target as HTMLImageElement).alt)
   if (target.id !== "theme" && (target as HTMLImageElement).alt !== "theme") {
     isOpened.value = !isOpened.value
     isOpened.value ? openMenu() : closeMenu();
@@ -78,15 +78,15 @@ const toggleMenu = (event: Event) => {
 
 // 操作菜单
 const actionIndexFunc = (action: string) => {
-  console.log(action);
+  // console.log(action);
   if (action === "add") {
     toggleAddModal()
   } else if (action === "preview") {
     preview()
   } else if (action === "import") {
-
+    toggleImportModal()
   } else if (action === "clear") {
-
+    tableValue.value = []
   } else if (action === "theme") {
     switchTheme()
   }
