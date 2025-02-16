@@ -62,8 +62,6 @@ const editDeadline = () => {
   flex-direction: column;
   //justify-content: center;
 
-  position: fixed;
-  top: 0;
 
   height: 2.5em;
   width: 100%;

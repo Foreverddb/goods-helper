@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import dom2Image from 'dom-to-image';
 import dayjs from 'dayjs';
-import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, provide, ref, watch} from 'vue';
 import type {Goods} from '@/typings.ts';
 import {TableValue} from '@/typings.ts';
 import Decimal from 'decimal.js';
-import EditIcon from "@/edit-icon.vue";
-import DeleteIcon from "@/delete-icon.vue";
 import NavigationBar from "@/components/navigation-bar.vue";
 import ActionMenu from "@/components/action-menu.vue";
+import GoodCard from "@/components/good-card.vue";
 
 const imgScale = 5;
 const showPreview = ref(false);
@@ -232,6 +231,7 @@ function toggleEditGoodsModal() {
         isAddGoods.value = false;
     }
 }
+provide("toggleEditGoodsModal", toggleEditGoodsModal)
 
 function toggleEditCnModal() {
     showCnEdit.value = !showCnEdit.value;
@@ -287,6 +287,7 @@ function confirmAddGoods() {
     });
     toggleEditGoodsModal();
 }
+provide("confirmAddGoods", confirmAddGoods)
 
 function deleteEditGoods() {
     if (!editingGoods.value?.originList || editingGoods.value?.originIndex === undefined || editingGoods.value?.originIndex === -1) {
@@ -301,6 +302,7 @@ function deleteEditGoods() {
         toggleEditGoodsModal();
     }
 }
+provide("deleteEditGoods", deleteEditGoods)
 
 function editCn(tableValue: TableValue) {
     toggleEditCnModal();
@@ -312,6 +314,10 @@ function deleteTableValue(index: number) {
         tableValue.value.splice(index, 1);
     }
 }
+provide('editCn', editCn)
+provide('deleteTableValue', deleteTableValue)
+provide('addGoods', addGoods)
+provide('editGoods', editGoods)
 
 const imgHeight = ref('100%');
 
@@ -339,7 +345,7 @@ function changeFont(e) {
  */
 const bandTheme = ref("popipa")
 
-watch(bandTheme, () => console.log(bandTheme.value))
+watch(tableValue, () => console.log(tableValue.value))
 
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
@@ -425,40 +431,26 @@ onMounted(() => {
                     v-model:title="title"
                     v-model:deadline="ddl"
                 ></navigation-bar>
+
                 <action-menu
                     :band-theme="bandTheme"
                     v-model:theme="bandTheme"
                     v-model:preview="showPreview"
+                    v-model:table="tableValue"
+                    v-model:edit="editingAdd"
                 />
 
 <!--                <h2 class="title">{{title}} <edit-icons @click="toggleEditTitleModal" width="1.4rem" height="1.4rem" /></h2>-->
 <!--                <h2 class="title">{{ddl}} <edit-icons @click="toggleEditDDLModal" width="1.4rem" height="1.4rem" /></h2>-->
+                <good-card
+                    v-for="(data, index) in tableValue"
+                    :data="data"
+                    :index="index"
+                    v-model:show="showGoodsEdit"
+                    v-model:edit="editingGoods"
+                    v-model:is-added="isAddGoods"
+                />
 
-                <div v-for="(data, index) in tableValue" class="edit-item">
-                    <div class="cn">
-                        <span>cn：</span>
-                        {{ data.cn }}
-                        <div class="action">
-                            <edit-icon @click="editCn(data)" width="1.4rem" height="1.4rem"/>
-                            <delete-icon @click="deleteTableValue(index)" width="1.6rem" height="1.6rem"/>
-                        </div>
-                    </div>
-                    <div class="goods-list">
-                        <span>类型：</span>
-                        <div @click="editGoods(goods, data.goodsList, goodsIndex)"
-                             v-for="(goods, goodsIndex) in data.goodsList" class="goods-item">
-                            {{ goods.name }} * {{ goods.quantity.toString() }}
-                            <edit-icon width="1.2rem" height="1.2rem"/>
-                        </div>
-                        <div style="background: palevioletred" class="goods-item" @click="addGoods(data.goodsList)">点击新增</div>
-                    </div>
-                    <div class="total-price">
-                        <span>金额：</span>
-                        {{ data.totalPrice.toString() }}
-                    </div>
-                    <div class="actions">
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -514,32 +506,6 @@ onMounted(() => {
             </div>
         </div>
 
-        <div v-if="showGoodsEdit && editingGoods" class="modal goods transparent">
-            <div @click="toggleEditGoodsModal" class="modal-mask"></div>
-            <div class="modal-wrapper">
-                <h2>编辑谷子</h2>
-                <div v-if="!isAddGoods">此处的修改会自动保存</div>
-                <div class="input-wrap">
-                    <label for="name">谷子名称</label>
-                    <input v-model="editingGoods.name" id="name"/>
-                </div>
-                <div class="input-wrap">
-                    <label for="price">谷子单价</label>
-                    <input type="number" id="price" :value="editingGoods.price"
-                           @input="(e) => editingGoods!.price = new Decimal(e?.target?.value || 0)"/>
-                </div>
-                <div class="input-wrap">
-                    <label for="quantity">谷子数量</label>
-                    <input type="number" id="quantity" :value="editingGoods.quantity"
-                           @input="(e) => editingGoods!.quantity = new Decimal(e?.target?.value || 0)"/>
-                </div>
-                <div class="btn-bar">
-                    <button class="button" @click="toggleEditGoodsModal">返回</button>
-                    <button v-if="isAddGoods" class="button" @click="confirmAddGoods">新增</button>
-                    <button v-else class="button" @click="deleteEditGoods">删除</button>
-                </div>
-            </div>
-        </div>
         <div v-if="showCnEdit && editingTableValue" class="modal goods transparent">
             <div @click="toggleEditCnModal" class="modal-mask"></div>
             <div class="modal-wrapper">
@@ -582,20 +548,20 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-        <div v-if="showAdd && editingAdd" class="modal goods transparent">
-            <div @click="toggleAddModal" class="modal-mask"></div>
-            <div class="modal-wrapper">
-                <h2>新增表内容</h2>
-                <div class="input-wrap">
-                    <label for="cn">cn</label>
-                    <input v-model="editingAdd.cn" id="cn"/>
-                </div>
-                <div class="btn-bar">
-                    <button class="button" @click="toggleAddModal">返回</button>
-                    <button class="button" @click="confirmAdd">确认新增</button>
-                </div>
-            </div>
-        </div>
+<!--        <div v-if="showAdd && editingAdd" class="modal goods transparent">-->
+<!--            <div @click="toggleAddModal" class="modal-mask"></div>-->
+<!--            <div class="modal-wrapper">-->
+<!--                <h2>新增表内容</h2>-->
+<!--                <div class="input-wrap">-->
+<!--                    <label for="cn">cn</label>-->
+<!--                    <input v-model="editingAdd.cn" id="cn"/>-->
+<!--                </div>-->
+<!--                <div class="btn-bar">-->
+<!--                    <button class="button" @click="toggleAddModal">返回</button>-->
+<!--                    <button class="button" @click="confirmAdd">确认新增</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
         <div v-if="showImage" class="modal goods transparent">
             <div @click="showImage = false" class="modal-mask"></div>
             <div class="modal-wrapper" id="image-downloader">

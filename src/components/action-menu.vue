@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import {computed, ref} from "vue";
+import {computed, provide, ref} from "vue";
 import {iconArray} from "@/assets/icons"
+import {TableValue} from "@/typings.ts";
+import AddModal from "@/components/add-modal.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -13,6 +15,17 @@ const props = withDefaults(
 
 const showPreview = defineModel('preview')
 const theme = defineModel('theme')
+const tableValue = defineModel<TableValue[]>('table', {
+  default: () => []
+})
+
+
+
+// modal
+const showAdd = ref(false);
+const editingAdd = defineModel<TableValue | null>("edit", {
+  default: () => null
+})
 
 const logoUrl = computed(() => new URL(`../assets/${props.bandTheme}/${props.bandTheme}.png`, import.meta.url).href)
 
@@ -67,7 +80,7 @@ const toggleMenu = (event: Event) => {
 const actionIndexFunc = (action: string) => {
   console.log(action);
   if (action === "add") {
-
+    toggleAddModal()
   } else if (action === "preview") {
     preview()
   } else if (action === "import") {
@@ -79,6 +92,7 @@ const actionIndexFunc = (action: string) => {
   }
 }
 
+// 预览
 function preview() {
   const wrap = document.getElementById('wrap');
   if (wrap) {
@@ -87,6 +101,7 @@ function preview() {
   showPreview.value = !showPreview.value;
 }
 
+// 切换主题
 let themeIdx = 0
 const themeList = [
     'popipa',
@@ -101,6 +116,21 @@ function switchTheme() {
   theme.value = themeList[curIdx]
 }
 
+// 新增 goods
+function toggleAddModal() {
+  showAdd.value = !showAdd.value;
+  editingAdd.value = showAdd.value ? new TableValue('', []) : null;
+}
+function confirmAdd() {
+  if (!editingAdd.value) {
+    return;
+  }
+  tableValue.value.push(editingAdd.value);
+  toggleAddModal();
+}
+
+provide("confirmAdd", confirmAdd)
+
 </script>
 
 <template>
@@ -114,6 +144,11 @@ function switchTheme() {
       </div>
     </div>
   </div>
+
+  <add-modal
+      v-model:show="showAdd"
+      v-model:edit="editingAdd"
+  ></add-modal>
 </template>
 
 <style scoped lang="less">
