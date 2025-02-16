@@ -548,20 +548,7 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-<!--        <div v-if="showAdd && editingAdd" class="modal goods transparent">-->
-<!--            <div @click="toggleAddModal" class="modal-mask"></div>-->
-<!--            <div class="modal-wrapper">-->
-<!--                <h2>新增表内容</h2>-->
-<!--                <div class="input-wrap">-->
-<!--                    <label for="cn">cn</label>-->
-<!--                    <input v-model="editingAdd.cn" id="cn"/>-->
-<!--                </div>-->
-<!--                <div class="btn-bar">-->
-<!--                    <button class="button" @click="toggleAddModal">返回</button>-->
-<!--                    <button class="button" @click="confirmAdd">确认新增</button>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
+
         <div v-if="showImage" class="modal goods transparent">
             <div @click="showImage = false" class="modal-mask"></div>
             <div class="modal-wrapper" id="image-downloader">
