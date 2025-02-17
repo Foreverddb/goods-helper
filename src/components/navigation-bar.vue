@@ -55,7 +55,7 @@ const editDeadline = () => {
 </template>
 
 <style scoped lang="less">
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
+//@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
 
 .navbar-container {
   display: flex;
