@@ -42,14 +42,17 @@ const editDeadline = () => {
     </div>
 
     <div class="row-2">
+        <div class="input-content">
+            <input v-model="title">
+        </div>
       <div class="input-content">
         <input v-model="deadline">
       </div>
 
-      <div class="deadline-confirm">
-        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px"/>
+<!--      <div class="deadline-confirm">-->
+<!--        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px"/>-->
 
-      </div>
+<!--      </div>-->
     </div>
   </div>
 </template>
