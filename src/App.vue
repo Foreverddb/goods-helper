@@ -60,7 +60,6 @@ const displayTableValue = computed(() => {
                 totalPrice: ''
             });
         }
-        console.log(offset, data);
 
         return data;
     }
@@ -79,48 +78,56 @@ async function exportImage() {
         alert('表格暂未加载成功， 请稍等片刻重试！');
         return;
     }
-    loading.value = true;
-    const node = document.getElementById('preview-wrap') as Node;
-    const svgUrl = await dom2Image.toSvg(node);
-    const img = new Image();
 
-    img.onload = (e) => {
-        const target = e.target as HTMLImageElement;
-        const width = target.width * imgScale;
-        const height = target.height * imgScale;
+    try {
+        loading.value = true;
+        const node = document.getElementById('preview-wrap') as Node;
+        console.log('started');
+        const svgUrl = await dom2Image.toSvg(node);
+        console.log('converted');
+        const img = new Image();
 
-        const isSafari = /Safari/.test(navigator.userAgent) && /iPhone/.test(navigator.userAgent);
-        if (isSafari) {
-            // ios safari无法通过canvas渲染高精图
+        img.onload = (e) => {
+            console.log('loaded');
+            const target = e.target as HTMLImageElement;
+            const width = target.width * imgScale;
+            const height = target.height * imgScale;
+
+            const isSafari = /Safari/.test(navigator.userAgent) && /iPhone/.test(navigator.userAgent);
+            if (isSafari) {
+                // ios safari无法通过canvas渲染高精图
+                img.width = width;
+                img.height = height;
+                loading.value = false;
+                image.value = img;
+                showImage.value = true;
+                return;
+            }
+
+            const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = width;
+            canvas.height = height;
             img.width = width;
             img.height = height;
+
+            ctx?.drawImage(img, 0, 0, width, height);
+
+            const url = canvas.toDataURL('image/png');
+
+            const link = document.createElement('a');
+            link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
+            link.href = url;
+            link.click();
             loading.value = false;
-            image.value = img;
-            showImage.value = true;
-            return;
-        }
 
-        const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-        const ctx = canvas.getContext('2d');
+        };
 
-        canvas.width = width;
-        canvas.height = height;
-        img.width = width;
-        img.height = height;
-
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        const url = canvas.toDataURL('image/png');
-
-        const link = document.createElement('a');
-        link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
-        link.href = url;
-        link.click();
-        loading.value = false;
-
-    };
-
-    img.src = svgUrl;
+        img.src = svgUrl;
+    } catch (e) {
+        alert('导出错误：' + e);
+    }
 }
 
 function addNewGoods(cn: string, goods: Goods[]) {
@@ -346,7 +353,7 @@ function changeFont(e) {
 /**
  * 乐队主题切换
  */
-const bandTheme = ref("popipa")
+const bandTheme = ref(window.localStorage.getItem('theme') || "popipa")
 
 watch(tableValue, () => console.log(tableValue.value))
 
@@ -421,10 +428,7 @@ onMounted(() => {
                         </div>
                     </footer>
                 </div>
-                <div class="aside" :style="{
-                    height: imgHeight,
-                    backgroundImage: `url('/yukki${Math.ceil(Math.random() * 2)}.png')`,
-                }">
+                <div class="aside">
                     <img @load="codeLoaded = true" src="./code.jpg">
                 </div>
             </div>

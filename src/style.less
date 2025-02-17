@@ -16,6 +16,8 @@ body {
     --inner-height: 100vh;
     height: var(--inner-height);
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     //overflow: hidden;
 
     .content {
@@ -25,6 +27,7 @@ body {
         box-sizing: border-box;
         //padding: 2rem .4rem 7rem;
         height: calc(var(--inner-height));
+        flex: 1;
     }
 
     .edit-wrap {
@@ -121,8 +124,6 @@ body {
             min-width: 22rem;
             display: flex;
             flex-direction: column;
-            background-size: 10%;
-            background-repeat: repeat;
 
             .yukki {
                 width: 100%;
@@ -257,6 +258,7 @@ body {
     }
 
     .modal {
+        z-index: 1000;
         text-align: center;
         position: fixed;
         top: 0;
