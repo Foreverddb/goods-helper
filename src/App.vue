@@ -379,7 +379,7 @@ onMounted(() => {
         class="wrap"
     >
         <div :style="{
-            backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
+            backgroundImage: `url('./${bandTheme}/${bandTheme}.png')`,
         }" class="content" id="wrap">
             <!--  预览栏  -->
             <div v-show="showPreview" id="preview-wrap" :style="{
