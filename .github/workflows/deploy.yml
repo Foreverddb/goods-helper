@@ -43,7 +43,7 @@ jobs:
         run: npm install # 或 pnpm install / yarn install / bun install
       - name: Build
         run: |
-          npm run build
+          npm run build-only
       - name: Upload artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
