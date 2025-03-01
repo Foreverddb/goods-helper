@@ -370,6 +370,9 @@ function changeQrPosition(e) {
 
 function uploadQr(e) {
     const file = e.target.files[0];
+    if (file.size / 1024 / 1024 > 4) {
+        alert('当前上传图片大于4MB，将无法持久保存，以后需每次重新上传（不影响本次），可以尝试更换更小的图片方便存储');
+    }
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
