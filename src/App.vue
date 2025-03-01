@@ -329,12 +329,18 @@ provide('deleteTableValue', deleteTableValue)
 provide('addGoods', addGoods)
 provide('editGoods', editGoods)
 
+const imgWidth = ref('100%');
 const imgHeight = ref('100%');
 
 watch(showPreview, () => {
    nextTick(() => {
-       const preview = document.getElementById('preview-wrap');
-       preview && (imgHeight.value = getComputedStyle(preview).height);
+       const preview = document.getElementById('wrapper');
+       const header = document.getElementsByClassName('preview-header')[0];
+       const content = document.getElementsByClassName('preview-content')[0];
+
+       preview && (imgWidth.value = getComputedStyle(preview).width);
+       content && header && (imgHeight.value = parseInt(getComputedStyle(content).height) + parseInt(getComputedStyle(header).height) + 'px');
+
        const priceHeader = document.getElementById('priceHeader');
        const allTotalPrice =  document.getElementById('allTotalPrice');
 
@@ -415,12 +421,20 @@ onMounted(() => {
             <div v-show="showPreview" id="preview-wrap" :style="{
                 fontFamily,
             }" class="preview-wrap">
-                <div v-if="qrPosition === 'up'" class="aside">
-                    <img @load="codeLoaded = true" :src="qrCodeUrl">
+                <div v-if="qrPosition === 'up'" class="vertical-aside" :style="{
+                    width: imgWidth,
+                }">
+                    <img :style="{
+                    width: imgWidth,
+                }" @load="codeLoaded = true" :src="qrCodeUrl">
                 </div>
                 <div class="wrapper">
-                    <div v-if="qrPosition === 'left'" class="aside">
-                        <img @load="codeLoaded = true" :src="qrCodeUrl">
+                    <div v-if="qrPosition === 'left'" class="aside" :style="{
+                    height: imgHeight,
+                }">
+                        <img @load="codeLoaded = true" :src="qrCodeUrl" :style="{
+                    height: imgHeight,
+                }">
                     </div>
                     <div class="preview-wrap-table">
                         <header class="preview-header">
@@ -465,12 +479,20 @@ onMounted(() => {
                             </div>
                         </footer>
                     </div>
-                    <div v-if="qrPosition === 'right'" class="aside">
-                        <img @load="codeLoaded = true" :src="qrCodeUrl">
+                    <div v-if="qrPosition === 'right'" class="aside" :style="{
+                    height: imgHeight,
+                }">
+                        <img @load="codeLoaded = true" :src="qrCodeUrl" :style="{
+                    height: imgHeight,
+                }">
                     </div>
                 </div>
-                <div v-if="qrPosition === 'down'" class="aside">
-                    <img @load="codeLoaded = true" :src="qrCodeUrl">
+                <div v-if="qrPosition === 'down'" class="vertical-aside" :style="{
+                    width: imgWidth,
+                }">
+                    <img :style="{
+                    width: imgWidth,
+                }" @load="codeLoaded = true" :src="qrCodeUrl">
                 </div>
             </div>
             <!--  编辑栏  -->
