@@ -2,7 +2,7 @@
 import {ref} from "vue";
 import icons from "@/assets/icons"
 
-
+const emits = defineEmits(['openHistory']);
 
 const title = defineModel("title", {
   default: () => '标题'
@@ -11,6 +11,8 @@ const title = defineModel("title", {
 const deadline = defineModel("deadline", {
   default: () => ''
 })
+
+defineProps(['showHistory']);
 
 const editTitle = () => {
 
@@ -27,15 +29,19 @@ const editDeadline = () => {
     target.style.height = "2.5em"
   }
 }
+
+
 </script>
 
 <template>
   <div class="navbar-container">
     <div class="row-1">
-      <div class="goods-title" @click="editTitle">
+      <div class="goods-title" style="width: 70%" @click="editTitle">
         {{ title }}
       </div>
-
+        <div v-if="showHistory" class="deadline" style="right: 60px;" @click="emits('openHistory')">
+            <img :src="icons.historyIcon" alt="deadline" style="height: 30px"/>
+        </div>
       <div class="deadline" @click="editDeadline">
         <img :src="icons.deadlineIcon" alt="deadline" style="height: 20px"/>
       </div>

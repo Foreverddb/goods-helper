@@ -394,10 +394,51 @@ function uploadQr(e) {
  */
 const bandTheme = ref(window.localStorage.getItem('theme') || "popipa")
 
-watch(tableValue, () => console.log(tableValue.value))
+const storageKeys = ref<string[]>([]);
+const displayStorageKeys = computed(() => {
+   return [...storageKeys.value].reverse();
+});
+const currentStorageKey = dayjs().format('YYYY年MM月DD日HH:mm:ss');
+watch(tableValue, (value) => {
+    if (!storageKeys.value.includes(currentStorageKey)) {
+        storageKeys.value.push(currentStorageKey);
+    }
+    if (storageKeys.value.length > 5) {
+        const oldKey = storageKeys.value.shift() || '';
+        window.localStorage.removeItem(oldKey);
+    }
+    window.localStorage.setItem(currentStorageKey, JSON.stringify(value));
+}, {
+    deep: true,
+});
 
+const showHistory = ref(false);
+function openHistory() {
+    showHistory.value = true;
+}
+
+function revertHistory(key: string) {
+    if (confirm('恢复历史将会覆盖当前的数据，若当前已有数据请慎重点击')) {
+        const data = JSON.parse(window.localStorage.getItem(key) || '') || [];
+        tableValue.value = data.map((item: TableValue) => {
+           return new TableValue(item.cn, item.goodsList.map(goods => ({
+               name: goods.name,
+               price: new Decimal(goods.price),
+               quantity: new Decimal(goods.quantity),
+           })));
+        });
+    }
+}
+
+watch(storageKeys, (value) => {
+    window.localStorage.setItem('storageKeys', JSON.stringify(value));
+}, {
+    deep: true,
+});
 onMounted(() => {
     innerHeight.value = window.innerHeight + 'px';
+
+    storageKeys.value = JSON.parse(window.localStorage.getItem('storageKeys') || '[]');
 
     const textareaDom = textarea.value;
     if (!textareaDom) {
@@ -503,6 +544,8 @@ onMounted(() => {
                 <navigation-bar
                     v-model:title="title"
                     v-model:deadline="ddl"
+                    @open-history="openHistory"
+                    :show-history="storageKeys.length"
                 ></navigation-bar>
 
                 <action-menu
@@ -631,6 +674,22 @@ onMounted(() => {
             </div>
         </div>
 
+        <div v-if="showHistory" class="modal goods transparent">
+            <div @click="showHistory = false" class="modal-mask"></div>
+            <div class="modal-wrapper" id="image-downloader">
+                <h2>历史记录</h2>
+                <div>仅保存最近5次编辑历史记录</div>
+                <div style="display: flex;flex-direction: column;gap: .2rem;">
+                    <div v-for="key in displayStorageKeys" style="padding: .2rem;font-size: 1.4rem;border: 1px solid black;">
+                        {{key}}
+                        <button @click="revertHistory(key)">恢复</button>
+                    </div>
+                </div>
+                <div class="btn-bar">
+                    <button class="button" @click="showHistory = false">返回</button>
+                </div>
+            </div>
+        </div>
         <div v-if="showImage" class="modal goods transparent">
             <div @click="showImage = false" class="modal-mask"></div>
             <div class="modal-wrapper" id="image-downloader">
