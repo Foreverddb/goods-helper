@@ -35,6 +35,7 @@ onMounted(() => {
         backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
       }"
       class="content"
+      :class="bandTheme"
       id="wrap"
     >
       <router-view></router-view>

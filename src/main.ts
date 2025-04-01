@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import "./styles/index.less"
 import router from '@/route/index'
+import "./styles/index.less"
 
 createApp(App)
     .use(router)

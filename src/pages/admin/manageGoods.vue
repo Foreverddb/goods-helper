@@ -1,16 +1,156 @@
 <template>
-  <div class="content" id="wrap">
-    <navigation-bar
-      v-model:title="title"
-      v-model:deadline="ddl"
-    ></navigation-bar>
+  <div class="manage-nav-container">
+    <div class="row-1">
+      <div class="manage-title">
+        {{ title }}
+      </div>
+
+      <div class="search">
+        <img
+          :src="icons.searchIcon"
+          @click="editSearch"
+          alt="search"
+          style="height: 20px"
+        />
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="input-content">
+        <input v-model="searchStr" />
+      </div>
+
+      <div class="deadline-confirm">
+        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px" />
+      </div>
+    </div>
   </div>
+  <div class="manage-container"></div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
-import NavigationBar from "@/components/navigation-bar.vue";
+
+import icons from "@/assets/icons";
 
 const title = ref("chuchu 的午夜后宫");
-const ddl = ref("ddl");
+const searchStr = ref("搜索");
+
+const switchEditSearch = ref(false);
+const editSearch = () => {
+  switchEditSearch.value = !switchEditSearch.value;
+  const target = document.body.querySelector(
+    ".manage-nav-container"
+  ) as HTMLElement;
+  if (switchEditSearch.value) {
+    target.style.height = "5em";
+  } else {
+    target.style.height = "2.5em";
+  }
+};
+
+const mockData = [
+  {
+    activityName: "yukkisu 的测试用例-1",
+    activityId: 1,
+    beginTime: new Date().toLocaleString(),
+    endTime: new Date().toLocaleString(),
+  },
+  {
+    activityName: "yukkisu 的测试用例-2",
+    activityId: 2,
+    beginTime: new Date().toLocaleString(),
+    endTime: Date(),
+  },
+];
+
+const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
 </script>
+
+<style lang="less" scoped>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
+
+.manage-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-nav-container {
+  display: flex;
+  flex-direction: column;
+  //justify-content: center;
+
+  height: 2.5em;
+  width: 100%;
+
+  z-index: 100;
+
+  font-size: 24px;
+
+  //margin: 5px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+
+  transition: all 0.3s ease-in-out;
+
+  overflow: hidden;
+
+  font-family: "Noto Sans SC", serif;
+
+  .row-1 {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 2em;
+    margin-top: 5px;
+
+    .manage-title {
+      margin: 10px 20px;
+    }
+
+    .search {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      position: absolute;
+      right: 20px;
+    }
+  }
+
+  .row-2 {
+    height: 1.5em;
+    margin: 0.5em 0;
+
+    transition: all 0.3s ease-in-out;
+
+    display: flex;
+    align-items: center;
+
+    .input-content {
+      display: flex;
+      align-items: center;
+      margin: 0 20px;
+      flex: 1;
+
+      input {
+        height: 2.5em;
+        border: none;
+        outline: none;
+        border-radius: 20px;
+
+        width: 95%;
+        padding: 0 20px;
+      }
+    }
+
+    .deadline-confirm {
+      margin: 0 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+</style>

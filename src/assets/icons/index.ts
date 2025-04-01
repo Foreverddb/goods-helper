@@ -6,11 +6,13 @@ import editIcon from "./edit.svg"
 import themeIcon from "./theme.svg"
 import deadlineIcon from "./deadline.svg"
 import confirmIcon from "./confirm.svg"
+import searchIcon from "./search.svg"
 
-export const iconArray = [addIcon, previewIcon, importIcon, deleteIcon, themeIcon, editIcon]
+export const iconArray = [addIcon, previewIcon, importIcon, deleteIcon, themeIcon, editIcon, searchIcon]
 
 export default {
     iconArray,
     deadlineIcon,
     confirmIcon,
+    searchIcon
 }
