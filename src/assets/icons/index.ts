@@ -14,5 +14,6 @@ export default {
     iconArray,
     deadlineIcon,
     confirmIcon,
-    searchIcon
+    searchIcon,
+    themeIcon
 }

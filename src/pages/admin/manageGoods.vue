@@ -5,6 +5,14 @@
         {{ title }}
       </div>
 
+      <div class="theme">
+        <img
+          :src="icons.themeIcon"
+          @click="switchTheme"
+          alt="theme"
+          style="height: 20px"
+        />
+      </div>
       <div class="search">
         <img
           :src="icons.searchIcon"
@@ -25,13 +33,24 @@
       </div>
     </div>
   </div>
-  <div class="manage-container"></div>
+  <div class="manage-content">
+    <ActivityCard
+      v-for="item in mockData"
+      :activity-id="item.activityId"
+      :activity-name="item.activityName"
+      :begin-time="item.beginTime"
+      :end-time="item.endTime"
+    ></ActivityCard>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 
 import icons from "@/assets/icons";
+import ActivityCard from "@/components/activity-card.vue";
+
+import testImg from "../../../public/popipa/popipa.png";
 
 const title = ref("chuchu 的午夜后宫");
 const searchStr = ref("搜索");
@@ -55,24 +74,53 @@ const mockData = [
     activityId: 1,
     beginTime: new Date().toLocaleString(),
     endTime: new Date().toLocaleString(),
+    imgUrl: testImg,
   },
   {
     activityName: "yukkisu 的测试用例-2",
     activityId: 2,
     beginTime: new Date().toLocaleString(),
-    endTime: Date(),
+    endTime: new Date().toLocaleString(),
+    imgUrl: testImg,
+  },
+  {
+    activityName: "yukkisu 的测试用例-3",
+    activityId: 3,
+    beginTime: new Date().toLocaleString(),
+    endTime: new Date().toLocaleString(),
+    imgUrl: testImg,
+  },
+  {
+    activityName: "yukkisu 的测试用例-4",
+    activityId: 4,
+    beginTime: new Date().toLocaleString(),
+    endTime: new Date().toLocaleString(),
+    imgUrl: testImg,
   },
 ];
 
 const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
+
+// 切换主题
+let themeIdx = 0;
+const themeList = ["popipa", "roselia", "ras", "hhw", "monica", "mygo"];
+function switchTheme() {
+  const curIdx = ++themeIdx % themeList.length;
+  bandTheme.value = themeList[curIdx];
+}
 </script>
 
 <style lang="less" scoped>
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
 
-.manage-container {
+.manage-content {
   display: flex;
-  flex-direction: column;
+  max-height: 80vh;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+
+  margin: 90px 0 20px;
 }
 
 .manage-nav-container {
@@ -92,6 +140,8 @@ const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
   border-bottom-right-radius: 10px;
 
   transition: all 0.3s ease-in-out;
+
+  position: fixed;
 
   overflow: hidden;
 
@@ -115,6 +165,15 @@ const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
 
       position: absolute;
       right: 20px;
+    }
+
+    .theme {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      position: absolute;
+      right: 50px;
     }
   }
 
