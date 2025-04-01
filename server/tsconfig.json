@@ -1,3 +1,9 @@
 {
-  "extends": "../.nuxt/tsconfig.server.json"
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
 }
