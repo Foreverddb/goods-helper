@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import dom2Image from "dom-to-image";
-import dayjs from "dayjs";
-import { computed, nextTick, onMounted, provide, ref, watch } from "vue";
-import type { Goods } from "@/typings.ts";
-import { TableValue } from "@/typings";
-import Decimal from "decimal.js";
-import NavigationBar from "@/components/navigation-bar.vue";
-import ActionMenu from "@/components/action-menu.vue";
-import GoodCard from "@/components/good-card.vue";
-import ImportModal from "@/components/import-modal.vue";
+import dom2Image from 'dom-to-image';
+import dayjs from 'dayjs';
+import { computed, nextTick, onMounted, provide, ref, watch } from 'vue';
+import type { Goods } from '@/typings.ts';
+import { TableValue } from '@/typings';
+import Decimal from 'decimal.js';
+import NavigationBar from '@/components/navigation-bar.vue';
+import ActionMenu from '@/components/action-menu.vue';
+import GoodCard from '@/components/good-card.vue';
+import ImportModal from '@/components/import-modal.vue';
+import { useRoute } from 'vue-router';
 
 const imgScale = 5;
 const showPreview = ref(false);
@@ -25,14 +26,14 @@ const showImage = ref(false);
 const loading = ref(false);
 const image = ref<HTMLImageElement>();
 
-const title = ref("标题");
-const ddl = ref("ddl");
-const innerHeight = ref("100vh");
+const title = ref(useRoute().query.activityName || '标题');
+const ddl = ref(useRoute().query.endTime || 'ddl');
+const innerHeight = ref('100vh');
 
-const importType = ref("order");
-const importPrefix = ref("");
-const importSuffix = ref("");
-const importValue = ref("");
+const importType = ref('order');
+const importPrefix = ref('');
+const importSuffix = ref('');
+const importValue = ref('');
 const tableValue = ref<TableValue[]>([]);
 const editingGoods = ref<
   | (Goods & {
@@ -58,9 +59,9 @@ const displayTableValue = computed(() => {
     const offset = 20 - tableValue.value.length;
     for (let i = 0; i < offset; i++) {
       data.push({
-        cn: "",
+        cn: '',
         goodsList: [],
-        totalPrice: "",
+        totalPrice: ''
       });
     }
 
@@ -69,7 +70,7 @@ const displayTableValue = computed(() => {
 });
 
 function preview() {
-  const wrap = document.getElementById("wrap");
+  const wrap = document.getElementById('wrap');
   if (wrap) {
     wrap.scrollLeft = 0;
   }
@@ -78,27 +79,25 @@ function preview() {
 
 async function exportImage() {
   if (!codeLoaded.value) {
-    alert("表格暂未加载成功， 请稍等片刻重试！");
+    alert('表格暂未加载成功， 请稍等片刻重试！');
     return;
   }
 
   try {
     loading.value = true;
-    const node = document.getElementById("preview-wrap") as Node;
-    console.log("started");
+    const node = document.getElementById('preview-wrap') as Node;
+    console.log('started');
     const svgUrl = await dom2Image.toSvg(node);
-    console.log("converted");
+    console.log('converted');
     const img = new Image();
 
-    img.onload = (e) => {
-      console.log("loaded");
+    img.onload = e => {
+      console.log('loaded');
       const target = e.target as HTMLImageElement;
       const width = target.width * imgScale;
       const height = target.height * imgScale;
 
-      const isSafari =
-        /Safari/.test(navigator.userAgent) &&
-        /iPhone/.test(navigator.userAgent);
+      const isSafari = /Safari/.test(navigator.userAgent) && /iPhone/.test(navigator.userAgent);
       if (isSafari) {
         // ios safari无法通过canvas渲染高精图
         img.width = width;
@@ -109,8 +108,8 @@ async function exportImage() {
         return;
       }
 
-      const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-      const ctx = canvas.getContext("2d");
+      const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+      const ctx = canvas.getContext('2d');
 
       canvas.width = width;
       canvas.height = height;
@@ -119,10 +118,10 @@ async function exportImage() {
 
       ctx?.drawImage(img, 0, 0, width, height);
 
-      const url = canvas.toDataURL("image/png");
+      const url = canvas.toDataURL('image/png');
 
-      const link = document.createElement("a");
-      link.download = `肾表${dayjs().format("YYYYMMDD-HHmm")}.png`;
+      const link = document.createElement('a');
+      link.download = `肾表${dayjs().format('YYYYMMDD-HHmm')}.png`;
       link.href = url;
       link.click();
       loading.value = false;
@@ -130,12 +129,12 @@ async function exportImage() {
 
     img.src = svgUrl;
   } catch (e) {
-    alert("导出错误：" + e);
+    alert('导出错误：' + e);
   }
 }
 
 function addNewGoods(cn: string, goods: Goods[]) {
-  const index = tableValue.value.findIndex((item) => item.cn === cn);
+  const index = tableValue.value.findIndex(item => item.cn === cn);
   if (index === -1) {
     tableValue.value.push(new TableValue(cn, goods));
   } else {
@@ -146,14 +145,14 @@ function addNewGoods(cn: string, goods: Goods[]) {
 function importTable() {
   try {
     console.log(importValue.value);
-    const rows = importValue.value.split("\n");
-    const types = rows[1].split("\t");
-    const prices = rows[2].split("\t");
+    const rows = importValue.value.split('\n');
+    const types = rows[1].split('\t');
+    const prices = rows[2].split('\t');
 
     // 因为前面有4行，分别为标题、种类、单价、表头，故index从4开始
-    if (importType.value === "summary") {
+    if (importType.value === 'summary') {
       for (let index = 4; index < rows.length; index++) {
-        const data = rows[index].split("\t");
+        const data = rows[index].split('\t');
         const cn = data[1];
         const goods: Goods[] = [];
 
@@ -166,20 +165,20 @@ function importTable() {
             goods.push({
               name: importPrefix.value + types[i] + importSuffix.value,
               quantity: new Decimal(data[i]),
-              price: new Decimal(prices[i]),
+              price: new Decimal(prices[i])
             });
           }
         }
         addNewGoods(cn, goods);
       }
-    } else if (importType.value === "order") {
+    } else if (importType.value === 'order') {
       const valueList: {
         [cn: string]: Goods[];
       } = {};
 
       // 因为前面有3行，分别为标题、种类、单价，故index从4开始
       for (let index = 3; index < rows.length; index++) {
-        const data = rows[index].split("\t");
+        const data = rows[index].split('\t');
 
         if (data.length <= 1) {
           console.log(data);
@@ -194,14 +193,14 @@ function importTable() {
 
             if (valueList[cn]) {
               const goods = valueList[cn];
-              const index = goods.findIndex((item) => item.name === type);
+              const index = goods.findIndex(item => item.name === type);
               if (index !== -1) {
                 goods[index].quantity = goods[index].quantity.plus(1);
               } else {
                 goods.push({
                   name: type,
                   quantity: new Decimal(1),
-                  price,
+                  price
                 });
               }
             } else {
@@ -209,8 +208,8 @@ function importTable() {
                 {
                   name: type,
                   quantity: new Decimal(1),
-                  price,
-                },
+                  price
+                }
               ];
             }
           }
@@ -227,20 +226,18 @@ function importTable() {
     console.log(tableValue.value);
   } catch (e) {
     console.error(e);
-    alert(
-      "导入错误，请确认你已粘贴正确的表格内容！若持续出错请尝试重新从拼谷助手复制"
-    );
+    alert('导入错误，请确认你已粘贴正确的表格内容！若持续出错请尝试重新从拼谷助手复制');
   }
 }
-provide("importTable", importTable);
+provide('importTable', importTable);
 
 function toggleImportModal() {
   showImportModal.value = !showImportModal.value;
-  importValue.value = "";
-  importSuffix.value = "";
-  importPrefix.value = "";
+  importValue.value = '';
+  importSuffix.value = '';
+  importPrefix.value = '';
 }
-provide("toggleImportModal", toggleImportModal);
+provide('toggleImportModal', toggleImportModal);
 
 function toggleEditGoodsModal() {
   showGoodsEdit.value = !showGoodsEdit.value;
@@ -249,7 +246,7 @@ function toggleEditGoodsModal() {
     isAddGoods.value = false;
   }
 }
-provide("toggleEditGoodsModal", toggleEditGoodsModal);
+provide('toggleEditGoodsModal', toggleEditGoodsModal);
 
 function toggleEditCnModal() {
   showCnEdit.value = !showCnEdit.value;
@@ -265,7 +262,7 @@ function toggleEditDDLModal() {
 
 function toggleAddModal() {
   showAdd.value = !showAdd.value;
-  editingAdd.value = showAdd.value ? new TableValue("", []) : null;
+  editingAdd.value = showAdd.value ? new TableValue('', []) : null;
 }
 
 function confirmAdd() {
@@ -287,10 +284,10 @@ function addGoods(originList: Goods[]) {
   toggleEditGoodsModal();
   isAddGoods.value = true;
   editingGoods.value = {
-    name: "",
+    name: '',
     price: new Decimal(0),
     quantity: new Decimal(0),
-    originList,
+    originList
   };
 }
 
@@ -301,11 +298,11 @@ function confirmAddGoods() {
   editingGoods.value.originList.push({
     name: editingGoods.value?.name,
     price: editingGoods.value?.price,
-    quantity: editingGoods.value?.quantity,
+    quantity: editingGoods.value?.quantity
   });
   toggleEditGoodsModal();
 }
-provide("confirmAddGoods", confirmAddGoods);
+provide('confirmAddGoods', confirmAddGoods);
 
 function deleteEditGoods() {
   if (
@@ -313,15 +310,15 @@ function deleteEditGoods() {
     editingGoods.value?.originIndex === undefined ||
     editingGoods.value?.originIndex === -1
   ) {
-    alert("删除失败！");
+    alert('删除失败！');
     return;
   }
-  if (confirm("您确认要删除吗？")) {
+  if (confirm('您确认要删除吗？')) {
     editingGoods.value.originList.splice(editingGoods.value.originIndex, 1);
     toggleEditGoodsModal();
   }
 }
-provide("deleteEditGoods", deleteEditGoods);
+provide('deleteEditGoods', deleteEditGoods);
 
 function editCn(tableValue: TableValue) {
   toggleEditCnModal();
@@ -329,23 +326,23 @@ function editCn(tableValue: TableValue) {
 }
 
 function deleteTableValue(index: number) {
-  if (confirm("您确认要删除吗?删除后该cn吃的谷子将一并删除")) {
+  if (confirm('您确认要删除吗?删除后该cn吃的谷子将一并删除')) {
     tableValue.value.splice(index, 1);
   }
 }
-provide("editCn", editCn);
-provide("deleteTableValue", deleteTableValue);
-provide("addGoods", addGoods);
-provide("editGoods", editGoods);
+provide('editCn', editCn);
+provide('deleteTableValue', deleteTableValue);
+provide('addGoods', addGoods);
+provide('editGoods', editGoods);
 
-const imgHeight = ref("100%");
+const imgHeight = ref('100%');
 
 watch(showPreview, () => {
   nextTick(() => {
-    const preview = document.getElementById("preview-wrap");
+    const preview = document.getElementById('preview-wrap');
     preview && (imgHeight.value = getComputedStyle(preview).height);
-    const priceHeader = document.getElementById("priceHeader");
-    const allTotalPrice = document.getElementById("allTotalPrice");
+    const priceHeader = document.getElementById('priceHeader');
+    const allTotalPrice = document.getElementById('allTotalPrice');
 
     if (!priceHeader || !allTotalPrice) {
       return;
@@ -363,30 +360,29 @@ function changeFont(e) {
 // mock
 const mockData = [
   {
-    cn: "yukkisu",
-    goodsList: [{ name: "test-1", count: 2, price: 12 }],
-    total: 2 * 12,
-  },
+    cn: 'yukkisu',
+    goodsList: [{ name: 'test-1', count: 2, price: 12 }],
+    total: 2 * 12
+  }
 ];
 
 /**
  * 乐队主题切换
  */
-const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
+const bandTheme = ref(window.localStorage.getItem('theme') || 'popipa');
 
 watch(tableValue, () => console.log(tableValue.value));
 
 onMounted(() => {
-  innerHeight.value = window.innerHeight + "px";
+  innerHeight.value = window.innerHeight + 'px';
 
   const textareaDom = textarea.value;
   if (!textareaDom) {
     return;
   }
-  textareaDom.addEventListener("input", (e) => {
-    textareaDom.style.height = "100px";
-    textareaDom.style.height =
-      (e.target as HTMLTextAreaElement).scrollHeight + "px";
+  textareaDom.addEventListener('input', e => {
+    textareaDom.style.height = '100px';
+    textareaDom.style.height = (e.target as HTMLTextAreaElement).scrollHeight + 'px';
   });
 });
 </script>
@@ -394,7 +390,7 @@ onMounted(() => {
 <template>
   <main
     :style="{
-      '--inner-height': innerHeight,
+      '--inner-height': innerHeight
     }"
     class="wrap"
   >
@@ -403,7 +399,7 @@ onMounted(() => {
       x
       id="wrap"
       :style="{
-        backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
+        backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`
       }"
     >
       <!--  预览栏  -->
@@ -411,7 +407,7 @@ onMounted(() => {
         v-show="showPreview"
         id="preview-wrap"
         :style="{
-          fontFamily,
+          fontFamily
         }"
         class="preview-wrap"
       >
@@ -422,10 +418,7 @@ onMounted(() => {
           </header>
           <main class="preview-content">
             <div style="flex: 3" class="column">
-              <div
-                style="font-size: 1.4rem; border-left: 0.2rem solid black"
-                class="header"
-              >
+              <div style="font-size: 1.4rem; border-left: 0.2rem solid black" class="header">
                 cn
               </div>
               <div
@@ -450,14 +443,11 @@ onMounted(() => {
               >
                 <span v-for="(goods, goodsIndex) in data.goodsList">
                   {{ goods.name }}{{ goods.quantity }}
-                  {{ goodsIndex !== data.goodsList.length - 1 ? "&nbsp;" : "" }}
+                  {{ goodsIndex !== data.goodsList.length - 1 ? '&nbsp;' : '' }}
                 </span>
               </div>
             </div>
-            <div
-              style="flex: 1; border-right: 0.1rem solid black"
-              class="column"
-            >
+            <div style="flex: 1; border-right: 0.1rem solid black" class="column">
               <div class="header" id="priceHeader">金额</div>
               <div
                 :style="`background: ${
@@ -486,10 +476,7 @@ onMounted(() => {
       </div>
       <!--  编辑栏  -->
       <div v-show="!showPreview" class="edit-wrap" :class="bandTheme">
-        <navigation-bar
-          v-model:title="title"
-          v-model:deadline="ddl"
-        ></navigation-bar>
+        <navigation-bar v-model:title="title" v-model:deadline="ddl"></navigation-bar>
 
         <action-menu
           :band-theme="bandTheme"
@@ -523,58 +510,30 @@ onMounted(() => {
     <!-- 工具栏 -->
     <div class="utils" v-if="showPreview">
       <button @click="preview" class="button">
-        {{ showPreview ? "返回修改" : "预览结果" }}
+        {{ showPreview ? '返回修改' : '预览结果' }}
       </button>
-      <button
-        class="button"
-        v-if="!showPreview && tableValue.length"
-        @click="tableValue = []"
-      >
+      <button class="button" v-if="!showPreview && tableValue.length" @click="tableValue = []">
         清空
       </button>
-      <button class="button" v-if="!showPreview" @click="toggleAddModal">
-        新增
-      </button>
+      <button class="button" v-if="!showPreview" @click="toggleAddModal">新增</button>
       <div v-if="showPreview">
         <div>字体选择</div>
         <select @change="changeFont" name="pets" id="pet-select">
-          <option
-            selected
-            value="my-song, SimSun, '宋体', 'Songti SC', sans-serif"
-          >
-            宋体
-          </option>
+          <option selected value="my-song, SimSun, '宋体', 'Songti SC', sans-serif">宋体</option>
           <option value="">默认</option>
         </select>
       </div>
-      <button class="button" v-if="showPreview" @click="exportImage">
-        导出图片
-      </button>
-      <button class="button" v-if="!showPreview" @click="toggleImportModal">
-        导入表格
-      </button>
+      <button class="button" v-if="showPreview" @click="exportImage">导出图片</button>
+      <button class="button" v-if="!showPreview" @click="toggleImportModal">导入表格</button>
       <div v-if="showImportModal" class="modal">
         <h2>从拼谷助手导入</h2>
         <div class="radio">
           <div>
-            <input
-              v-model="importType"
-              id="order"
-              value="order"
-              name="type"
-              type="radio"
-              checked
-            />
+            <input v-model="importType" id="order" value="order" name="type" type="radio" checked />
             <label for="order">排表</label>
           </div>
           <div>
-            <input
-              v-model="importType"
-              id="summary"
-              value="summary"
-              name="type"
-              type="radio"
-            />
+            <input v-model="importType" id="summary" value="summary" name="type" type="radio" />
             <label for="summary">汇总表</label>
           </div>
         </div>

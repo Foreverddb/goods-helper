@@ -1,10 +1,11 @@
 <template>
   <div
     :style="{
-      backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
+      backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`
     }"
     class="manage-goods"
     :class="bandTheme"
+    v-loading="loading"
   >
     <div class="manage-nav-container">
       <div class="row-1">
@@ -13,20 +14,10 @@
         </div>
 
         <div class="theme">
-          <img
-            :src="icons.themeIcon"
-            @click="switchTheme"
-            alt="theme"
-            style="height: 20px"
-          />
+          <img :src="icons.themeIcon" @click="switchTheme" alt="theme" style="height: 20px" />
         </div>
         <div class="search">
-          <img
-            :src="icons.searchIcon"
-            @click="editSearch"
-            alt="search"
-            style="height: 20px"
-          />
+          <img :src="icons.searchIcon" @click="editSearch" alt="search" style="height: 20px" />
         </div>
       </div>
 
@@ -42,90 +33,75 @@
     </div>
     <div class="manage-content">
       <ActivityCard
-        v-for="item in mockData"
+        v-for="item in activityList"
         :activity-id="item.activityId"
         :activity-name="item.activityName"
         :begin-time="item.beginTime"
         :end-time="item.endTime"
+        :key="item.activityId"
       ></ActivityCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from 'vue'
+import { getActivityList, type Activity } from '@/apis/activity'
 
-import icons from "@/assets/icons";
-import ActivityCard from "@/components/activity-card.vue";
+import icons from '@/assets/icons'
+import ActivityCard from '@/components/activity-card.vue'
 
-import testImg from "@/components/assets/popipa.png";
+import testImg from '@/components/assets/popipa.png'
+import { ElMessage } from 'element-plus'
 
-const title = ref("chuchu 的午夜后宫");
-const searchStr = ref("搜索");
+const title = ref('chuchu 的午夜后宫')
+const searchStr = ref('搜索')
 
-const switchEditSearch = ref(false);
+const switchEditSearch = ref(false)
 const editSearch = () => {
-  switchEditSearch.value = !switchEditSearch.value;
-  const target = document.body.querySelector(
-    ".manage-nav-container"
-  ) as HTMLElement;
+  switchEditSearch.value = !switchEditSearch.value
+  const target = document.body.querySelector('.manage-nav-container') as HTMLElement
   if (switchEditSearch.value) {
-    target.style.height = "5em";
+    target.style.height = '5em'
   } else {
-    target.style.height = "2.5em";
+    target.style.height = '2.5em'
   }
-};
+}
 
-const mockData = [
-  {
-    activityName: "yukkisu 的测试用例-1",
-    activityId: 1,
-    beginTime: new Date().toLocaleString(),
-    endTime: new Date().toLocaleString(),
-    imgUrl: testImg,
-  },
-  {
-    activityName: "yukkisu 的测试用例-2",
-    activityId: 2,
-    beginTime: new Date().toLocaleString(),
-    endTime: new Date().toLocaleString(),
-    imgUrl: testImg,
-  },
-  {
-    activityName: "yukkisu 的测试用例-3",
-    activityId: 3,
-    beginTime: new Date().toLocaleString(),
-    endTime: new Date().toLocaleString(),
-    imgUrl: testImg,
-  },
-  {
-    activityName: "yukkisu 的测试用例-4",
-    activityId: 4,
-    beginTime: new Date().toLocaleString(),
-    endTime: new Date().toLocaleString(),
-    imgUrl: testImg,
-  },
-];
+const activityList = ref<Array<Activity>>([])
+const loading = ref(true)
 
-const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
+onMounted(async () => {
+  try {
+    const res = await getActivityList()
+    activityList.value = res.data
+    ElMessage.success('获取活动列表成功')
+    loading.value = false
+  } catch (error) {
+    console.error('Failed to fetch activity list:', error)
+    loading.value = false
+  }
+})
 
-defineModel("theme", {
-  default: () => window.localStorage.getItem("theme") || "popipa",
-});
+const bandTheme = ref(window.localStorage.getItem('theme') || 'popipa')
+
+defineModel('theme', {
+  default: () => window.localStorage.getItem('theme') || 'popipa'
+})
 
 // 切换主题
-const themeList = ["popipa", "roselia", "ras", "hhw", "monica", "mygo"];
-let themeIdx = themeList.indexOf(bandTheme.value);
+const themeList = ['popipa', 'roselia', 'ras', 'hhw', 'monica', 'mygo']
+let themeIdx = themeList.indexOf(bandTheme.value)
 
 function switchTheme() {
-  const curIdx = ++themeIdx % themeList.length;
-  bandTheme.value = themeList[curIdx];
-  window.localStorage.setItem("theme", bandTheme.value);
+  const curIdx = ++themeIdx % themeList.length
+  bandTheme.value = themeList[curIdx]
+  window.localStorage.setItem('theme', bandTheme.value)
 }
 </script>
 
 <style lang="less" scoped>
-// @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
 .manage-goods {
   height: 100%;
 }
@@ -162,7 +138,7 @@ function switchTheme() {
 
   overflow: hidden;
 
-  font-family: "Noto Sans SC", serif;
+  font-family: 'Noto Sans SC', serif;
 
   .row-1 {
     display: flex;
