@@ -359,6 +359,16 @@ function changeFont(e) {
   fontFamily.value = e.target.value;
 }
 
+// 向后端请求数据
+// mock
+const mockData = [
+  {
+    cn: "yukkisu",
+    goodsList: [{ name: "test-1", count: 2, price: 12 }],
+    total: 2 * 12,
+  },
+];
+
 /**
  * 乐队主题切换
  */
@@ -388,7 +398,14 @@ onMounted(() => {
     }"
     class="wrap"
   >
-    <div class="content" id="wrap">
+    <div
+      class="content"
+      x
+      id="wrap"
+      :style="{
+        backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
+      }"
+    >
       <!--  预览栏  -->
       <div
         v-show="showPreview"

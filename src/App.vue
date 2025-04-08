@@ -30,14 +30,7 @@ onMounted(() => {
     }"
     class="wrap"
   >
-    <div
-      :style="{
-        backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
-      }"
-      class="content"
-      :class="bandTheme"
-      id="wrap"
-    >
+    <div class="content" id="wrap">
       <router-view></router-view>
     </div>
     <canvas v-show="false" id="canvas"></canvas>

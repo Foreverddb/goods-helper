@@ -1,46 +1,54 @@
 <template>
-  <div class="manage-nav-container">
-    <div class="row-1">
-      <div class="manage-title">
-        {{ title }}
+  <div
+    :style="{
+      backgroundImage: `url('/${bandTheme}/${bandTheme}.png')`,
+    }"
+    class="manage-goods"
+    :class="bandTheme"
+  >
+    <div class="manage-nav-container">
+      <div class="row-1">
+        <div class="manage-title">
+          {{ title }}
+        </div>
+
+        <div class="theme">
+          <img
+            :src="icons.themeIcon"
+            @click="switchTheme"
+            alt="theme"
+            style="height: 20px"
+          />
+        </div>
+        <div class="search">
+          <img
+            :src="icons.searchIcon"
+            @click="editSearch"
+            alt="search"
+            style="height: 20px"
+          />
+        </div>
       </div>
 
-      <div class="theme">
-        <img
-          :src="icons.themeIcon"
-          @click="switchTheme"
-          alt="theme"
-          style="height: 20px"
-        />
-      </div>
-      <div class="search">
-        <img
-          :src="icons.searchIcon"
-          @click="editSearch"
-          alt="search"
-          style="height: 20px"
-        />
+      <div class="row-2">
+        <div class="input-content">
+          <input v-model="searchStr" />
+        </div>
+
+        <div class="deadline-confirm">
+          <img :src="icons.confirmIcon" alt="confirm" style="height: 40px" />
+        </div>
       </div>
     </div>
-
-    <div class="row-2">
-      <div class="input-content">
-        <input v-model="searchStr" />
-      </div>
-
-      <div class="deadline-confirm">
-        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px" />
-      </div>
+    <div class="manage-content">
+      <ActivityCard
+        v-for="item in mockData"
+        :activity-id="item.activityId"
+        :activity-name="item.activityName"
+        :begin-time="item.beginTime"
+        :end-time="item.endTime"
+      ></ActivityCard>
     </div>
-  </div>
-  <div class="manage-content">
-    <ActivityCard
-      v-for="item in mockData"
-      :activity-id="item.activityId"
-      :activity-name="item.activityName"
-      :begin-time="item.beginTime"
-      :end-time="item.endTime"
-    ></ActivityCard>
   </div>
 </template>
 
@@ -50,7 +58,7 @@ import { ref } from "vue";
 import icons from "@/assets/icons";
 import ActivityCard from "@/components/activity-card.vue";
 
-import testImg from "../../../public/popipa/popipa.png";
+import testImg from "@/components/assets/popipa.png";
 
 const title = ref("chuchu 的午夜后宫");
 const searchStr = ref("搜索");
@@ -101,17 +109,26 @@ const mockData = [
 
 const bandTheme = ref(window.localStorage.getItem("theme") || "popipa");
 
+defineModel("theme", {
+  default: () => window.localStorage.getItem("theme") || "popipa",
+});
+
 // 切换主题
-let themeIdx = 0;
 const themeList = ["popipa", "roselia", "ras", "hhw", "monica", "mygo"];
+let themeIdx = themeList.indexOf(bandTheme.value);
+
 function switchTheme() {
   const curIdx = ++themeIdx % themeList.length;
   bandTheme.value = themeList[curIdx];
+  window.localStorage.setItem("theme", bandTheme.value);
 }
 </script>
 
 <style lang="less" scoped>
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
+// @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
+.manage-goods {
+  height: 100%;
+}
 
 .manage-content {
   display: flex;
@@ -119,8 +136,7 @@ function switchTheme() {
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
-
-  margin: 90px 0 20px;
+  margin-top: 20px;
 }
 
 .manage-nav-container {
@@ -141,7 +157,8 @@ function switchTheme() {
 
   transition: all 0.3s ease-in-out;
 
-  position: fixed;
+  position: sticky;
+  top: 0;
 
   overflow: hidden;
 

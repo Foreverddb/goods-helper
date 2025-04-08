@@ -1,32 +1,37 @@
 <script setup lang="ts">
-import {ref} from "vue";
-import icons from "@/assets/icons"
+import { computed, ref } from "vue";
+import icons from "@/assets/icons";
 
+import { useRoute } from "vue-router";
 
+console.log(useRoute().path);
+const isGoodsList = computed(() => {
+  return useRoute().path === "/goodsList";
+});
 
 const title = defineModel("title", {
-  default: () => '标题'
-})
+  default: () => "chuchu 的午夜后宫",
+});
 
 const deadline = defineModel("deadline", {
-  default: () => ''
-})
+  default: () => "",
+});
 
-const editTitle = () => {
+const editTitle = () => {};
 
-}
-
-const switchEditDeadline = ref(false)
+const switchEditDeadline = ref(false);
 const editDeadline = () => {
-  switchEditDeadline.value = !switchEditDeadline.value
-  const target = document.body.querySelector(".navbar-container") as HTMLElement
-  console.log(target)
+  switchEditDeadline.value = !switchEditDeadline.value;
+  const target = document.body.querySelector(
+    ".navbar-container"
+  ) as HTMLElement;
+  console.log(target);
   if (switchEditDeadline.value) {
-    target.style.height = "5em"
+    target.style.height = "5em";
   } else {
-    target.style.height = "2.5em"
+    target.style.height = "2.5em";
   }
-}
+};
 </script>
 
 <template>
@@ -37,31 +42,29 @@ const editDeadline = () => {
       </div>
 
       <div class="deadline" @click="editDeadline">
-        <img :src="icons.deadlineIcon" alt="deadline" style="height: 20px"/>
+        <img :src="icons.deadlineIcon" alt="deadline" style="height: 20px" />
       </div>
     </div>
 
     <div class="row-2">
       <div class="input-content">
-        <input v-model="deadline">
+        <input v-model="deadline" />
       </div>
 
       <div class="deadline-confirm">
-        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px"/>
-
+        <img :src="icons.confirmIcon" alt="confirm" style="height: 40px" />
       </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="less">
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
+// @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap");
 
 .navbar-container {
   display: flex;
   flex-direction: column;
   //justify-content: center;
-
 
   height: 2.5em;
   width: 100%;
@@ -99,12 +102,11 @@ const editDeadline = () => {
       position: absolute;
       right: 20px;
     }
-
   }
 
   .row-2 {
     height: 1.5em;
-    margin: .5em 0;
+    margin: 0.5em 0;
 
     transition: all 0.3s ease-in-out;
 
@@ -125,20 +127,16 @@ const editDeadline = () => {
 
         width: 95%;
         padding: 0 20px;
-      };
+      }
     }
 
     .deadline-confirm {
-
       margin: 0 20px;
 
       display: flex;
       align-items: center;
       justify-content: center;
-
     }
-
   }
-
 }
 </style>
